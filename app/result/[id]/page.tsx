@@ -17,12 +17,12 @@ import { Loader2, RefreshCw, ArrowLeft, AlertCircle } from 'lucide-react';
 import Link from 'next/link';
 
 const statusLabels: Record<Project['status'], string> = {
-  pending: 'Pending',
-  analyzing: 'Analyzing Image',
-  writing: 'Writing Copy',
-  generating: 'Generating Images',
-  completed: 'Completed',
-  failed: 'Failed',
+  pending: '等待中',
+  analyzing: '图片分析中',
+  writing: '文案生成中',
+  generating: '图片生成中',
+  completed: '已完成',
+  failed: '失败',
 };
 
 const statusProgress: Record<Project['status'], number> = {
@@ -50,7 +50,7 @@ export default function ResultPage() {
       setError(null);
     } catch (err) {
       console.error('Failed to fetch project:', err);
-      setError('Failed to load project');
+      setError('加载项目失败');
     } finally {
       setLoading(false);
     }
@@ -77,16 +77,16 @@ export default function ResultPage() {
     if (!project) return;
     // Cannot regenerate original image
     if (type === 'original') {
-      alert('Cannot regenerate original image');
+      alert('无法重新生成原图');
       return;
     }
     try {
       await regenerateImage(project.id, type);
-      alert(`Regenerating ${type} image...`);
+      alert(`正在重新生成 ${type} 图片...`);
       // TODO: Show toast notification instead
     } catch (error) {
       console.error('Failed to regenerate image:', error);
-      alert('Failed to regenerate image');
+      alert('重新生成图片失败');
     }
   };
 
@@ -94,11 +94,11 @@ export default function ResultPage() {
     if (!project) return;
     try {
       await regenerateCopy(project.id);
-      alert('Regenerating copywriting...');
+      alert('正在重新生成文案...');
       // TODO: Show toast notification instead
     } catch (error) {
       console.error('Failed to regenerate copy:', error);
-      alert('Failed to regenerate copywriting');
+      alert('重新生成文案失败');
     }
   };
 
@@ -115,10 +115,10 @@ export default function ResultPage() {
       <div className="container max-w-4xl px-6 py-16">
         <EmptyState
           icon={AlertCircle}
-          title="Project Not Found"
-          description={error || 'The project you are looking for does not exist'}
+          title="项目未找到"
+          description={error || '您查找的项目不存在'}
           action={{
-            label: 'Back to Dashboard',
+            label: '返回控制台',
             onClick: () => router.push('/dashboard'),
           }}
         />
@@ -143,7 +143,7 @@ export default function ResultPage() {
             <div>
               <h1 className="text-3xl font-bold">{project.name}</h1>
               <p className="text-sm text-muted-foreground">
-                Created {new Date(project.createdAt).toLocaleDateString()}
+                创建于 {new Date(project.createdAt).toLocaleDateString('zh-CN')}
               </p>
             </div>
           </div>
@@ -169,7 +169,7 @@ export default function ResultPage() {
           </div>
           <Progress value={statusProgress[project.status]} className="h-2" />
           <p className="text-xs text-muted-foreground">
-            This usually takes 2-5 minutes. You can leave this page and come back later.
+            通常需要 2-5 分钟。您可以离开此页面稍后再来查看。
           </p>
         </div>
       )}
@@ -177,8 +177,8 @@ export default function ResultPage() {
       {/* Failed State */}
       {isFailed && (
         <div className="rounded-lg bg-destructive/10 p-4 text-destructive">
-          <p className="font-medium">Generation failed</p>
-          <p className="text-sm">Please try creating a new project or contact support.</p>
+          <p className="font-medium">生成失败</p>
+          <p className="text-sm">请尝试创建新项目或联系客服。</p>
         </div>
       )}
 
@@ -186,17 +186,17 @@ export default function ResultPage() {
       {project.status === 'completed' && (
         <Tabs defaultValue="images" className="space-y-6">
           <TabsList className="grid w-full max-w-md grid-cols-3">
-            <TabsTrigger value="images">Images</TabsTrigger>
-            <TabsTrigger value="copy">Copywriting</TabsTrigger>
-            <TabsTrigger value="compliance">Compliance</TabsTrigger>
+            <TabsTrigger value="images">图片</TabsTrigger>
+            <TabsTrigger value="copy">文案</TabsTrigger>
+            <TabsTrigger value="compliance">合规检查</TabsTrigger>
           </TabsList>
 
           <TabsContent value="images" className="space-y-4">
             <div className="flex items-center justify-between">
-              <h2 className="text-xl font-semibold">Generated Images</h2>
+              <h2 className="text-xl font-semibold">生成的图片</h2>
               <Button variant="outline" size="sm" onClick={() => handleRegenerateImage('main')}>
                 <RefreshCw className="mr-2 h-4 w-4" />
-                Regenerate All
+                全部重新生成
               </Button>
             </div>
             <ImageGrid images={project.images} onRegenerate={handleRegenerateImage} />
@@ -204,10 +204,10 @@ export default function ResultPage() {
 
           <TabsContent value="copy" className="space-y-4">
             <div className="flex items-center justify-between">
-              <h2 className="text-xl font-semibold">Product Copywriting</h2>
+              <h2 className="text-xl font-semibold">商品文案</h2>
               <Button variant="outline" size="sm" onClick={handleRegenerateCopy}>
                 <RefreshCw className="mr-2 h-4 w-4" />
-                Regenerate Copy
+                重新生成文案
               </Button>
             </div>
             {project.copywriting && (
@@ -231,9 +231,9 @@ export default function ResultPage() {
       {isProcessing && (
         <div className="rounded-2xl border-2 border-dashed p-12 text-center">
           <Loader2 className="mx-auto mb-4 h-16 w-16 animate-spin text-primary" />
-          <h3 className="mb-2 text-xl font-semibold">AI is working on your project</h3>
+          <h3 className="mb-2 text-xl font-semibold">AI 正在处理您的项目</h3>
           <p className="text-muted-foreground">
-            We&apos;re analyzing your image, generating copy, and creating 5 professional images
+            我们正在分析您的图片、生成文案并创建 5 张专业图片
           </p>
         </div>
       )}

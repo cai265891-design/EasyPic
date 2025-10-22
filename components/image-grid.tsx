@@ -14,21 +14,21 @@ interface ImageGridProps {
 }
 
 const typeLabels: Record<ImageItem['type'], string> = {
-  original: 'Original',
-  main: 'Main (White BG)',
-  lifestyle: 'Lifestyle',
-  detail: 'Detail',
-  dimension: 'Dimension',
-  feature: 'Feature',
+  original: '原图',
+  main: '主图（白底）',
+  lifestyle: '场景图',
+  detail: '细节图',
+  dimension: '尺寸图',
+  feature: '功能图',
 };
 
 const typeDescriptions: Record<ImageItem['type'], string> = {
-  original: 'Your uploaded image',
-  main: 'Pure white background, centered product',
-  lifestyle: 'Product in real-life scene',
-  detail: 'Close-up of key features',
-  dimension: 'Size comparison & measurements',
-  feature: 'Key selling points with text',
+  original: '您上传的图片',
+  main: '纯白背景，产品居中',
+  lifestyle: '真实使用场景',
+  detail: '核心功能特写',
+  dimension: '尺寸对比和测量',
+  feature: '带文字的卖点展示',
 };
 
 export function ImageGrid({ images, onRegenerate }: ImageGridProps) {
@@ -80,7 +80,7 @@ export function ImageGrid({ images, onRegenerate }: ImageGridProps) {
               }}
             >
               <Download className="mr-2 h-4 w-4" />
-              Download
+              下载
             </Button>
             {onRegenerate && (
               <Button

@@ -33,7 +33,7 @@ export default function GeneratePage() {
 
   const handleGenerate = async () => {
     if (files.length === 0) {
-      alert('Please upload at least one image');
+      alert('请至少上传一张图片');
       return;
     }
 
@@ -56,7 +56,7 @@ export default function GeneratePage() {
       router.push(`/result/${project.id}`);
     } catch (error) {
       console.error('Failed to create project:', error);
-      alert('Failed to create project. Please try again.');
+      alert('创建项目失败，请重试。');
     } finally {
       setLoading(false);
     }
@@ -66,16 +66,16 @@ export default function GeneratePage() {
     <div className="container max-w-5xl space-y-8 px-6 py-8">
       {/* Header */}
       <div className="text-center">
-        <h1 className="mb-3 text-3xl font-bold">Generate Amazon Images</h1>
+        <h1 className="mb-3 text-3xl font-bold">生成亚马逊商品图</h1>
         <p className="text-lg text-muted-foreground">
-          Upload your product photo and let AI create 5 professional images + SEO copy
+          上传您的商品照片，让 AI 创建 5 张专业图片 + SEO 文案
         </p>
       </div>
 
       {/* Upload Section */}
       <Card>
         <CardHeader>
-          <CardTitle>1. Upload Product Images</CardTitle>
+          <CardTitle>1. 上传商品图片</CardTitle>
         </CardHeader>
         <CardContent>
           <Uploader onFiles={setFiles} maxFiles={20} />
@@ -85,37 +85,37 @@ export default function GeneratePage() {
       {/* Product Information (Optional) */}
       <Card>
         <CardHeader>
-          <CardTitle>2. Product Information (Optional)</CardTitle>
+          <CardTitle>2. 商品信息（可选）</CardTitle>
           <p className="text-sm text-muted-foreground">
-            Provide details to help AI generate more accurate copy
+            提供详细信息帮助 AI 生成更准确的文案
           </p>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="name">Product Name</Label>
+            <Label htmlFor="name">商品名称</Label>
             <Input
               id="name"
-              placeholder="e.g., Stainless Steel Water Bottle"
+              placeholder="例如：不锈钢保温杯"
               value={projectName}
               onChange={(e) => setProjectName(e.target.value)}
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="features">Key Features (comma separated)</Label>
+            <Label htmlFor="features">核心特点（逗号分隔）</Label>
             <Input
               id="features"
-              placeholder="e.g., insulated, leak-proof, BPA-free"
+              placeholder="例如：保温、防漏、不含BPA"
               value={keyFeatures}
               onChange={(e) => setKeyFeatures(e.target.value)}
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="specs">Product Specifications</Label>
+            <Label htmlFor="specs">商品规格</Label>
             <Textarea
               id="specs"
-              placeholder="e.g., Capacity: 32oz, Material: 18/8 stainless steel, Dimensions: 10.5 x 3 inches"
+              placeholder="例如：容量：950ml，材质：18/8不锈钢，尺寸：26.5 x 7.6 cm"
               value={specs}
               onChange={(e) => setSpecs(e.target.value)}
               rows={3}
@@ -127,54 +127,55 @@ export default function GeneratePage() {
       {/* Generation Settings */}
       <Card>
         <CardHeader>
-          <CardTitle>3. Generation Settings</CardTitle>
+          <CardTitle>3. 生成设置</CardTitle>
         </CardHeader>
         <CardContent className="grid gap-4 sm:grid-cols-3">
           <div className="space-y-2">
-            <Label htmlFor="category">Product Category</Label>
+            <Label htmlFor="category">商品类别</Label>
             <Select value={category} onValueChange={setCategory}>
               <SelectTrigger id="category">
-                <SelectValue placeholder="Select category" />
+                <SelectValue placeholder="选择类别" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="home">Home & Kitchen</SelectItem>
-                <SelectItem value="electronics">Electronics</SelectItem>
-                <SelectItem value="clothing">Clothing</SelectItem>
-                <SelectItem value="sports">Sports & Outdoors</SelectItem>
-                <SelectItem value="beauty">Beauty & Personal Care</SelectItem>
-                <SelectItem value="toys">Toys & Games</SelectItem>
-                <SelectItem value="other">Other</SelectItem>
+                <SelectItem value="home">家居厨房</SelectItem>
+                <SelectItem value="electronics">电子产品</SelectItem>
+                <SelectItem value="clothing">服装</SelectItem>
+                <SelectItem value="sports">运动户外</SelectItem>
+                <SelectItem value="beauty">美妆个护</SelectItem>
+                <SelectItem value="toys">玩具游戏</SelectItem>
+                <SelectItem value="other">其他</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="style">Image Style</Label>
+            <Label htmlFor="style">图片风格</Label>
             <Select value={style} onValueChange={setStyle}>
               <SelectTrigger id="style">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="modern">Modern</SelectItem>
-                <SelectItem value="minimal">Minimal</SelectItem>
-                <SelectItem value="luxury">Luxury</SelectItem>
-                <SelectItem value="playful">Playful</SelectItem>
+                <SelectItem value="modern">现代</SelectItem>
+                <SelectItem value="minimal">简约</SelectItem>
+                <SelectItem value="luxury">奢华</SelectItem>
+                <SelectItem value="playful">活泼</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="language">Copy Language</Label>
+            <Label htmlFor="language">文案语言</Label>
             <Select value={language} onValueChange={setLanguage}>
               <SelectTrigger id="language">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="en">English (US)</SelectItem>
-                <SelectItem value="es">Spanish</SelectItem>
-                <SelectItem value="de">German</SelectItem>
-                <SelectItem value="fr">French</SelectItem>
-                <SelectItem value="ja">Japanese</SelectItem>
+                <SelectItem value="en">英语 (美国)</SelectItem>
+                <SelectItem value="es">西班牙语</SelectItem>
+                <SelectItem value="de">德语</SelectItem>
+                <SelectItem value="fr">法语</SelectItem>
+                <SelectItem value="ja">日语</SelectItem>
+                <SelectItem value="zh">中文</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -192,12 +193,12 @@ export default function GeneratePage() {
           {loading ? (
             <>
               <Loader2 className="h-5 w-5 animate-spin" />
-              Generating...
+              生成中...
             </>
           ) : (
             <>
               <Sparkles className="h-5 w-5" />
-              Generate Images & Copy
+              生成图片和文案
             </>
           )}
         </Button>
@@ -205,7 +206,7 @@ export default function GeneratePage() {
 
       {/* Cost Info */}
       <div className="text-center text-sm text-muted-foreground">
-        <p>This will consume 10 credits</p>
+        <p>将消耗 10 积分</p>
       </div>
     </div>
   );

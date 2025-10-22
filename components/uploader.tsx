@@ -26,10 +26,10 @@ export function Uploader({
   const validateFile = useCallback(
     (file: File): string | null => {
       if (!accept.includes(file.type)) {
-        return `Invalid file type. Only ${accept.join(', ')} allowed.`;
+        return `文件类型无效。仅支持 ${accept.join(', ')}`;
       }
       if (file.size > maxSize) {
-        return `File too large. Max size: ${(maxSize / 1024 / 1024).toFixed(0)}MB`;
+        return `文件过大。最大 ${(maxSize / 1024 / 1024).toFixed(0)}MB`;
       }
       return null;
     },
@@ -52,7 +52,7 @@ export function Uploader({
         }
 
         if (files.length + validFiles.length >= maxFiles) {
-          setError(`Maximum ${maxFiles} files allowed`);
+          setError(`最多允许 ${maxFiles} 个文件`);
           break;
         }
 
@@ -133,11 +133,11 @@ export function Uploader({
             <Upload className="h-8 w-8 text-primary" />
           </div>
           <div>
-            <p className="text-lg font-medium">Drag & drop images here</p>
-            <p className="text-sm text-muted-foreground">or click to browse</p>
+            <p className="text-lg font-medium">拖拽图片到此处</p>
+            <p className="text-sm text-muted-foreground">或点击选择文件</p>
           </div>
           <div className="text-xs text-muted-foreground">
-            <p>Supports JPG, PNG • Max {maxFiles} files • Max {(maxSize / 1024 / 1024).toFixed(0)}MB each</p>
+            <p>支持 JPG、PNG • 最多 {maxFiles} 个文件 • 每个最大 {(maxSize / 1024 / 1024).toFixed(0)}MB</p>
           </div>
         </div>
       </div>
