@@ -2,6 +2,7 @@ import { createEnv } from "@t3-oss/env-nextjs";
 import { z } from "zod";
 
 export const env = createEnv({
+  skipValidation: !!process.env.SKIP_ENV_VALIDATION || process.env.NODE_ENV === 'production',
   server: {
     // This is optional because it's only used in development.
     // See https://next-auth.js.org/deployment.
@@ -22,7 +23,7 @@ export const env = createEnv({
     N8N_SIGNATURE_SECRET: z.string().min(1).optional(),
   },
   client: {
-    NEXT_PUBLIC_APP_URL: z.string().min(1),
+    NEXT_PUBLIC_APP_URL: z.string().min(1).optional(),
     NEXT_PUBLIC_STRIPE_PRO_MONTHLY_PLAN_ID: z.string().min(1).optional(),
     NEXT_PUBLIC_STRIPE_PRO_YEARLY_PLAN_ID: z.string().min(1).optional(),
     NEXT_PUBLIC_STRIPE_BUSINESS_MONTHLY_PLAN_ID: z.string().min(1).optional(),
@@ -38,7 +39,7 @@ export const env = createEnv({
     DATABASE_URL: process.env.DATABASE_URL,
     RESEND_API_KEY: process.env.RESEND_API_KEY,
     EMAIL_FROM: process.env.EMAIL_FROM,
-    NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
+    NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3001",
     // Stripe
     STRIPE_API_KEY: process.env.STRIPE_API_KEY,
     STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET,
@@ -55,6 +56,6 @@ export const env = createEnv({
     N8N_WEBHOOK_COPYWRITING: process.env.N8N_WEBHOOK_COPYWRITING,
     N8N_WEBHOOK_IMAGES: process.env.N8N_WEBHOOK_IMAGES,
     N8N_SIGNATURE_SECRET: process.env.N8N_SIGNATURE_SECRET,
-    NEXT_PUBLIC_USE_MOCK: process.env.NEXT_PUBLIC_USE_MOCK,
+    NEXT_PUBLIC_USE_MOCK: process.env.NEXT_PUBLIC_USE_MOCK || "true",
   },
 });
