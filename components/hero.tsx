@@ -31,14 +31,16 @@ export function Hero() {
 
           {/* CTA Buttons */}
           <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
-            <Button asChild size="lg" className="gap-2">
-              <Link href="/generate">
+            <Link href="/generate">
+              <Button size="lg" className="gap-2">
                 Start Generating <ArrowRight className="h-4 w-4" />
-              </Link>
-            </Button>
-            <Button asChild variant="outline" size="lg">
-              <Link href="/pricing">View Pricing</Link>
-            </Button>
+              </Button>
+            </Link>
+            <Link href="/pricing">
+              <Button variant="outline" size="lg">
+                View Pricing
+              </Button>
+            </Link>
           </div>
 
           {/* Stats */}

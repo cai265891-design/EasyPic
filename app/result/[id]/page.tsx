@@ -75,6 +75,11 @@ export default function ResultPage() {
 
   const handleRegenerateImage = async (type: Project['images'][number]['type']) => {
     if (!project) return;
+    // Cannot regenerate original image
+    if (type === 'original') {
+      alert('Cannot regenerate original image');
+      return;
+    }
     try {
       await regenerateImage(project.id, type);
       alert(`Regenerating ${type} image...`);
@@ -130,11 +135,11 @@ export default function ResultPage() {
       <div className="flex items-start justify-between">
         <div className="space-y-1">
           <div className="flex items-center gap-3">
-            <Button variant="ghost" size="icon" asChild>
-              <Link href="/dashboard">
+            <Link href="/dashboard">
+              <Button variant="ghost" size="icon">
                 <ArrowLeft className="h-4 w-4" />
-              </Link>
-            </Button>
+              </Button>
+            </Link>
             <div>
               <h1 className="text-3xl font-bold">{project.name}</h1>
               <p className="text-sm text-muted-foreground">

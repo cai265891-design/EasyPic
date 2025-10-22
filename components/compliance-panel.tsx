@@ -128,7 +128,7 @@ export function CompliancePanel({ images }: CompliancePanelProps) {
                   {getStatusBadge(check.status)}
                 </div>
                 <p className="text-sm text-muted-foreground">{check.description}</p>
-                <p className="text-xs text-muted-foreground italic">{check.message}</p>
+                <p className="text-xs italic text-muted-foreground">{check.message}</p>
               </div>
             </div>
           ))}

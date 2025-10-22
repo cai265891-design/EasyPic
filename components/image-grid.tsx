@@ -55,7 +55,7 @@ export function ImageGrid({ images, onRegenerate }: ImageGridProps) {
             </div>
 
             {/* Image Info */}
-            <div className="p-4 space-y-2">
+            <div className="space-y-2 p-4">
               <p className="text-sm font-medium">{typeLabels[img.type]}</p>
               <p className="text-xs text-muted-foreground">{typeDescriptions[img.type]}</p>
               <div className="flex items-center justify-between text-xs text-muted-foreground">

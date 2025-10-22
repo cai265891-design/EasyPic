@@ -57,7 +57,7 @@ export async function getProject(id: string): Promise<Project> {
  */
 export async function regenerateImage(
   projectId: string,
-  type: 'main' | 'lifestyle' | 'detail' | 'dimension' | 'feature'
+  type: import('@/types').GeneratedImageType
 ): Promise<boolean> {
   if (useMock) {
     console.log(`Mock: Regenerating ${type} image for project ${projectId}`);

@@ -22,7 +22,7 @@ export function BeforeAfter() {
               </span>
             </div>
             <Card className="overflow-hidden">
-              <div className="aspect-square relative bg-muted">
+              <div className="relative aspect-square bg-muted">
                 <Image
                   src="/examples/before.jpg"
                   alt="Before"
@@ -54,7 +54,7 @@ export function BeforeAfter() {
             <div className="grid grid-cols-2 gap-3">
               {['Main', 'Lifestyle', 'Detail', 'Dimension', 'Feature'].slice(0, 4).map((type, idx) => (
                 <Card key={idx} className="overflow-hidden">
-                  <div className="aspect-square relative bg-white">
+                  <div className="relative aspect-square bg-white">
                     <Image
                       src="/examples/after.jpg"
                       alt={type}

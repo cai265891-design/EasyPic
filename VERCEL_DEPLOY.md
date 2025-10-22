@@ -6,11 +6,15 @@
 
 ### 必需变量
 
+**重要提示**: 由于环境变量验证已在生产环境禁用,您可以**不设置任何环境变量**直接部署。应用会使用默认的 Mock 模式。
+
+如果您希望自定义配置,可以设置:
+
 ```bash
-# App URL
+# App URL (可选,默认会自动使用 Vercel 的部署 URL)
 NEXT_PUBLIC_APP_URL=https://your-app.vercel.app
 
-# Mock 模式 (启用 Mock 数据)
+# Mock 模式 (可选,默认为 true)
 NEXT_PUBLIC_USE_MOCK=true
 ```
 
@@ -66,18 +70,18 @@ git push origin main
 2. 选择您的 GitHub 仓库
 3. 点击 "Import"
 
-### 3. 配置环境变量
+### 3. 配置环境变量 (可选)
 
-在 Vercel 项目设置页面:
+**注意**: 此步骤是可选的。如果跳过,应用将使用 Mock 模式。
+
+如果您想自定义配置,在 Vercel 项目设置页面:
 
 1. 进入 **Settings** → **Environment Variables**
-2. 添加以下两个必需变量:
-
+2. 可选添加:
    ```
    NEXT_PUBLIC_APP_URL = https://your-project.vercel.app
    NEXT_PUBLIC_USE_MOCK = true
    ```
-
 3. 点击 **Save**
 
 ### 4. 部署
@@ -99,7 +103,7 @@ Vercel 会自动开始部署。等待几分钟后，您的应用就可以访问�
 
 ### Q: 部署失败，提示 "Invalid environment variables"
 
-**A**: 确保至少设置了 `NEXT_PUBLIC_APP_URL`。将其他所有变量改为可选后，这应该是唯一必需的变量。
+**A**: 此问题已解决。现在生产环境已跳过环境变量验证,您无需设置任何环境变量即可部署。如果仍然遇到问题,请检查 `env.mjs` 中的 `skipValidation` 配置。
 
 ### Q: 页面加载但图片显示不出来
 

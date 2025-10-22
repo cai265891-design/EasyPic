@@ -92,9 +92,11 @@ export function MiniPricing() {
               </CardContent>
 
               <CardFooter>
-                <Button asChild className="w-full" variant={plan.popular ? 'default' : 'outline'}>
-                  <Link href={plan.href}>{plan.cta}</Link>
-                </Button>
+                <Link href={plan.href} className="w-full">
+                  <Button className="w-full" variant={plan.popular ? 'default' : 'outline'}>
+                    {plan.cta}
+                  </Button>
+                </Link>
               </CardFooter>
             </Card>
           ))}

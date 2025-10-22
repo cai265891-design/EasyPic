@@ -16,7 +16,7 @@ export function UsageBar({ credits, maxCredits, projectsThisMonth }: UsageBarPro
 
   return (
     <Card className="p-4">
-      <div className="flex items-center justify-between mb-3">
+      <div className="mb-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Coins className="h-4 w-4 text-primary" />
           <span className="text-sm font-medium">Credits</span>
@@ -26,7 +26,7 @@ export function UsageBar({ credits, maxCredits, projectsThisMonth }: UsageBarPro
         </span>
       </div>
 
-      <Progress value={percentage} className="h-2 mb-3" />
+      <Progress value={percentage} className="mb-3 h-2" />
 
       <div className="flex items-center justify-between text-xs text-muted-foreground">
         <span>{possibleProjects} projects available</span>
