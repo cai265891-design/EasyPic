@@ -34,6 +34,12 @@ npx prisma studio    # Open Prisma Studio GUI
 
 # Email development
 pnpm email           # Start React Email dev server on port 3333
+
+# Workflow System (New!)
+pnpm docker:dev      # Start Redis & PostgreSQL in Docker
+pnpm workers         # Start BullMQ workers (development mode with watch)
+pnpm workers:prod    # Start BullMQ workers (production mode)
+pnpm docker:down     # Stop Docker services
 ```
 
 ## Architecture
@@ -120,3 +126,137 @@ Navigation menus and site settings live in `config/`:
 ## Package Manager
 
 This project uses **pnpm**. Always use `pnpm` commands, not `npm` or `yarn`.
+
+---
+
+## Workflow System Architecture (NEW)
+
+### Overview
+The workflow system implements an Amazon product listing automation pipeline using:
+- **PostgreSQL FSM**: State machine stored in database via Prisma
+- **BullMQ + Redis**: Async task queue for job processing
+- **Claude Vision API**: Product image recognition
+- **Ideogram/DALL-E**: Product image generation (planned)
+- **Cloudflare R2 / AWS S3**: Image storage
+
+### Workflow Execution Flow
+
+```
+用户上传图片 → 工作流 1 (图片识别) → 工作流 2 (生成 Listing) → 工作流 3 (生成商品展示图) → 完成
+```
+
+### Database Models
+
+Key models in `prisma/schema.prisma`:
+- `WorkflowExecution` - State machine, tracks workflow status (`PENDING`, `PROCESSING`, `COMPLETED`, `FAILED`)
+- `Product` - Image recognition results (description, keywords, confidence)
+- `Listing` - Amazon listing content (title, description, bullet_points × 5, keywords)
+- `ImageSet` + `ProductImage` - Generated product images (5 images per listing)
+- `RegenerationLog` - Tracks regeneration history and costs
+
+### Queues
+
+Defined in `lib/queues/index.ts`:
+- `image-recognition` - Image analysis (60s timeout, 3 retries)
+- `listing-generation` - Listing generation (90s timeout, 3 retries)
+- `image-generation` - Batch image generation (10min timeout, 2 retries)
+- `image-single-generation` - Single image regeneration (2min timeout, 2 retries)
+
+### Workers
+
+Located in `workers/` directory:
+- `image-recognition.worker.ts` - Downloads image, calls Claude Vision API, saves to DB, triggers listing generation
+- `listing-generation.worker.ts` - Generates listing copy, performs quality checks (score 0-100), triggers image generation
+- Worker concurrency: 3-5 parallel jobs per queue
+- Start workers: `pnpm workers` (development) or `pnpm workers:prod` (production)
+
+### API Routes
+
+Core routes:
+- `POST /api/workflows/start` - Start new workflow (requires auth)
+- `GET /api/workflows/[id]` - Get workflow status and all results (includes product, listing, images)
+
+Regeneration routes (planned):
+- `POST /api/workflows/[id]/regenerate/description` - Regenerate product description with adjusted prompt
+- `POST /api/workflows/[id]/regenerate/listing` - Regenerate listing with tone/market adjustments
+- `POST /api/workflows/[id]/regenerate/images` - Regenerate all or selective images (indices 0-4)
+
+### Services
+
+Core services in `lib/services/`:
+- `claude.ts` - Claude API client with circuit breaker, handles vision analysis and listing generation
+- `storage.ts` - S3/R2 upload, image processing with Sharp.js (resize, thumbnail, watermark)
+
+### Environment Variables
+
+Required vars (add to `.env.local`):
+```
+REDIS_URL=redis://localhost:6379
+ANTHROPIC_API_KEY=sk-ant-xxx
+CLOUDFLARE_R2_ACCESS_KEY=xxx
+CLOUDFLARE_R2_SECRET_KEY=xxx
+CLOUDFLARE_R2_BUCKET=amazon-images
+CLOUDFLARE_R2_PUBLIC_URL=https://pub-xxx.r2.dev
+```
+
+### Development Setup
+
+1. Start infrastructure:
+```bash
+pnpm docker:dev  # Starts Redis + PostgreSQL in Docker
+```
+
+2. Run database migrations:
+```bash
+npx prisma db push
+```
+
+3. Start workers in separate terminal:
+```bash
+pnpm workers
+```
+
+4. Start Next.js dev server:
+```bash
+pnpm dev
+```
+
+### Key Features
+
+- **Version Control**: Each regeneration creates new version, preserves old data for A/B comparison
+- **Partial Regeneration**: Can regenerate individual images without redoing entire workflow
+- **Quality Scoring**: Auto-approves listings with score ≥ 80/100
+- **Circuit Breaker**: Prevents cascading failures when AI APIs are down (opens after 5 failures, 1min cooldown)
+- **Retry Logic**: Exponential backoff for transient errors (2s, 4s, 8s intervals)
+- **Progress Tracking**: Real-time progress updates via job.updateProgress()
+
+### Monitoring
+
+Workers log to console with structured format:
+- `[图片识别]` prefix for image recognition worker
+- `[文案生成]` prefix for listing generation worker
+- Logs include: workflowId, processing time, errors
+
+### Testing Workflow
+
+To test the complete flow:
+
+1. Send POST request to `/api/workflows/start`:
+```json
+{
+  "imageUrl": "https://example.com/product.jpg",
+  "category": "Electronics",
+  "brand": "MyBrand"
+}
+```
+
+2. Get `workflowId` from response
+
+3. Poll `/api/workflows/{workflowId}` to track progress:
+   - status: PENDING → PROCESSING → COMPLETED
+   - progress: 0% → 30% (recognition) → 60% (listing) → 100%
+
+4. Final response includes:
+   - product.description (AI-generated description)
+   - listing.title, listing.bulletPoints[5], listing.description
+   - images.items[5] (when image generation is implemented)

@@ -4,7 +4,19 @@
       "Bash(pnpm build:*)",
       "Bash(pnpm install:*)",
       "Bash(ls:*)",
-      "Bash(echo $?)"
+      "Bash(echo $?)",
+      "Bash(npx prisma:*)",
+      "Bash(pnpm add:*)",
+      "Bash(pnpm dev:*)",
+      "Bash(if [ -f .env.local ])",
+      "Bash(then echo \"文件存在\")",
+      "Bash(else echo \"文件不存在\")",
+      "Bash(fi)",
+      "Bash(openssl rand:*)",
+      "Bash(curl:*)",
+      "Bash(pnpm docker:dev:*)",
+      "Bash(DATABASE_URL='postgresql://postgres:postgres@localhost:5432/saas_db?schema=public' npx prisma db push --accept-data-loss)",
+      "Bash(DATABASE_URL='postgresql://postgres:postgres@localhost:5432/saas_db?schema=public' npx tsx scripts/create-test-user.ts)"
     ],
     "deny": [],
     "ask": []

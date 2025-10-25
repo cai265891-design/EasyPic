@@ -67,6 +67,8 @@ model User {
   stripePriceId          String?   @map(name: "stripe_price_id")
   stripeCurrentPeriodEnd DateTime? @map(name: "stripe_current_period_end")
 
+  workflows WorkflowExecution[]
+
   @@map(name: "users")
 }
 
@@ -77,4 +79,189 @@ model VerificationToken {
 
   @@unique([identifier, token])
   @@map(name: "verification_tokens")
+}
+
+// ============================================
+// 工作流系统模型
+// ============================================
+
+enum WorkflowStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+enum WorkflowStep {
+  IMAGE_DOWNLOAD
+  IMAGE_RECOGNITION
+  LISTING_GENERATION
+  IMAGE_SET_GENERATION
+}
+
+model WorkflowExecution {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // 状态机字段
+  status       WorkflowStatus @default(PENDING)
+  currentStep  WorkflowStep?
+
+  // 输入数据
+  imageUrl  String
+  category  String?
+  brand     String?
+
+  // 输出数据
+  productId String?   @unique
+  listingId String?   @unique
+
+  // 版本控制
+  version       Int      @default(1)
+  parentId      String?
+  parent        WorkflowExecution?  @relation("WorkflowVersions", fields: [parentId], references: [id], onDelete: SetNull)
+  children      WorkflowExecution[] @relation("WorkflowVersions")
+
+  // 重新生成信息
+  regenerateReason String?
+
+  // 元数据
+  metadata  Json      @default("{}")
+  error     String?   @db.Text
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  product   Product?
+  listing   Listing?
+  regenerationLogs RegenerationLog[]
+
+  @@index([userId, status])
+  @@index([createdAt])
+  @@index([parentId])
+  @@map(name: "workflow_executions")
+}
+
+model Product {
+  id          String   @id @default(cuid())
+  workflowId  String   @unique
+  workflow    WorkflowExecution @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+
+  imageUrl    String
+  description String   @db.Text
+  keywords    Json     @default("[]")
+  confidence  Float?
+
+  listing     Listing?
+
+  createdAt   DateTime @default(now())
+
+  @@map(name: "products")
+}
+
+model Listing {
+  id          String   @id @default(cuid())
+  productId   String   @unique
+  product     Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  workflowId  String   @unique
+  workflow    WorkflowExecution @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+
+  title       String   @db.VarChar(500)
+  description String   @db.Text
+  bulletPoints Json    @default("[]")
+  keywords    Json     @default("[]")
+
+  qualityScore Float?
+  approved    Boolean  @default(false)
+
+  // 版本控制
+  version     Int      @default(1)
+  isActive    Boolean  @default(true)
+
+  // 用户反馈
+  userRating   Int?    @db.SmallInt
+  userFeedback String? @db.Text
+
+  imageSet    ImageSet?
+
+  createdAt   DateTime @default(now())
+
+  @@index([isActive])
+  @@map(name: "listings")
+}
+
+model ImageSet {
+  id        String   @id @default(cuid())
+  listingId String   @unique
+  listing   Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
+
+  jobId     String   @unique
+  images    Json     @default("[]")
+  status    String   @default("processing")
+
+  // 版本控制
+  version       Int      @default(1)
+  isActive      Boolean  @default(true)
+  regeneratedIndices Json? @default("null")
+
+  totalCost Decimal  @db.Decimal(10, 4) @default(0)
+
+  createdAt   DateTime @default(now())
+  completedAt DateTime?
+
+  productImages ProductImage[]
+
+  @@index([isActive])
+  @@map(name: "image_sets")
+}
+
+model ProductImage {
+  id        String   @id @default(cuid())
+  imageSetId String
+  imageSet  ImageSet @relation(fields: [imageSetId], references: [id], onDelete: Cascade)
+
+  index         Int
+  bulletPoint   String   @db.Text
+  imageUrl      String
+  thumbnailUrl  String
+  style         String
+
+  // 版本控制
+  version       Int      @default(1)
+  isActive      Boolean  @default(true)
+
+  // 生成元数据
+  generationTime Int?
+  cost          Decimal  @db.Decimal(10, 4) @default(0)
+  prompt        String?  @db.Text
+
+  createdAt     DateTime @default(now())
+
+  @@index([imageSetId, index])
+  @@index([isActive])
+  @@map(name: "product_images")
+}
+
+model RegenerationLog {
+  id           String   @id @default(cuid())
+  workflowId   String
+  workflow     WorkflowExecution @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+
+  step         String
+  reason       String
+  userFeedback String?  @db.Text
+
+  oldVersion   Int
+  newVersion   Int
+
+  costIncurred Decimal  @db.Decimal(10, 4) @default(0)
+
+  createdAt    DateTime @default(now())
+
+  @@index([workflowId])
+  @@index([createdAt])
+  @@map(name: "regeneration_logs")
 }
