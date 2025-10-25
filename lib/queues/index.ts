@@ -21,7 +21,6 @@ export const imageRecognitionQueue = new Queue("image-recognition", {
   connection,
   defaultJobOptions: {
     ...defaultJobOptions,
-    timeout: 60000, // 60 秒超时
   },
 });
 
@@ -30,7 +29,6 @@ export const listingGenerationQueue = new Queue("listing-generation", {
   connection,
   defaultJobOptions: {
     ...defaultJobOptions,
-    timeout: 90000, // 90 秒超时
   },
 });
 
@@ -39,7 +37,6 @@ export const imageGenerationQueue = new Queue("image-generation", {
   connection,
   defaultJobOptions: {
     ...defaultJobOptions,
-    timeout: 600000, // 10 分钟超时（批量生成 5 张图）
     attempts: 2, // 图片生成只重试 2 次
   },
 });
@@ -51,8 +48,7 @@ export const imageSingleGenerationQueue = new Queue(
     connection,
     defaultJobOptions: {
       ...defaultJobOptions,
-      timeout: 120000, // 2 分钟超时
-      attempts: 2,
+        attempts: 2,
     },
   }
 );

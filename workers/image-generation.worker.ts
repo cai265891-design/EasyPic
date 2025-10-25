@@ -64,6 +64,7 @@ const worker = new Worker<ImageGenerationJob>(
       const imageSet = await prisma.imageSet.create({
         data: {
           listingId,
+          jobId: job.id!,
           version,
         },
       });
@@ -106,6 +107,8 @@ const worker = new Worker<ImageGenerationJob>(
               imageUrl: uploaded.imageUrl,
               thumbnailUrl: uploaded.thumbnailUrl,
               prompt: generated.prompt,
+              bulletPoint: bulletPoints[i] || "",
+              style: "professional Amazon product photography",
               index: i,
             },
           });
@@ -126,7 +129,6 @@ const worker = new Worker<ImageGenerationJob>(
       await prisma.workflowExecution.update({
         where: { id: workflowId },
         data: {
-          imageSetId: imageSet.id,
           status: "COMPLETED",
           currentStep: "IMAGE_SET_GENERATION",
           metadata: {
