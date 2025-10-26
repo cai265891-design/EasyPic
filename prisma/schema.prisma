@@ -149,7 +149,8 @@ model Product {
   workflowId  String   @unique
   workflow    WorkflowExecution @relation(fields: [workflowId], references: [id], onDelete: Cascade)
 
-  imageUrl    String
+  imageUrl    String   // 本地图片 URL (localhost)
+  publicImageUrl String?  // 公网可访问的图片 URL (R2/S3)
   description String   @db.Text
   keywords    Json     @default("[]")
   confidence  Float?
@@ -173,6 +174,7 @@ model Listing {
   description String   @db.Text
   bulletPoints Json    @default("[]")
   keywords    Json     @default("[]")
+  imagePrompts Json?   @default("[]") // AI 生成的图片提示词
 
   qualityScore Float?
   approved    Boolean  @default(false)

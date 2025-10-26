@@ -120,7 +120,7 @@ export default function ResultPage() {
     }
 
     // 生成的图片
-    if (workflow.images?.items) {
+    if (workflow.images?.items && Array.isArray(workflow.images.items)) {
       const typeMap: { [key: number]: Project['images'][number]['type'] } = {
         0: 'main',
         1: 'lifestyle',
@@ -129,18 +129,33 @@ export default function ResultPage() {
         4: 'feature',
       };
 
+      console.log(`[ResultPage] Processing ${workflow.images.items.length} generated images`);
+
+      if (workflow.images.items.length === 0) {
+        console.warn('[ResultPage] ⚠️ 警告: 图片数组为空,可能是图片生成失败');
+        // 如果 workflow 状态是 COMPLETED 但没有图片,记录错误信息
+        if (workflow.status === 'COMPLETED') {
+          console.error('[ResultPage] ❌ 工作流已完成但没有生成图片,这是一个异常状态');
+          console.error('[ResultPage] 错误信息:', workflow.error);
+        }
+      }
+
       workflow.images.items.forEach((img: any, index: number) => {
+        console.log(`[ResultPage] Adding image ${index}:`, img.imageUrl);
         images.push({
           id: img.id,
           type: typeMap[index] || 'main',
-          url: img.url,
+          url: img.imageUrl,
           width: 2000,
           height: 2000,
           fileSize: 0,
         });
       });
+    } else {
+      console.log('[ResultPage] No generated images found in workflow data');
     }
 
+    console.log(`[ResultPage] Total images in array: ${images.length}`);
     return images;
   };
 
@@ -293,6 +308,40 @@ export default function ResultPage() {
                 全部重新生成
               </Button>
             </div>
+
+            {/* 图片生成失败警告 */}
+            {project.images.filter(img => img.type !== 'original').length === 0 && (
+              <div className="rounded-lg bg-yellow-50 border border-yellow-200 p-4">
+                <div className="flex items-start gap-3">
+                  <AlertCircle className="h-5 w-5 text-yellow-600 mt-0.5" />
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-yellow-900 mb-1">图片生成失败</h3>
+                    <p className="text-sm text-yellow-800 mb-3">
+                      AI 图片生成过程中出现错误,未能生成商品展示图。您可以:
+                    </p>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleRegenerateImage('main')}
+                        className="bg-white"
+                      >
+                        <RefreshCw className="mr-2 h-4 w-4" />
+                        重新生成图片
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => router.push('/dashboard')}
+                      >
+                        返回控制台
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
             <ImageGrid
               images={project.images}
               onRegenerate={handleRegenerateImage}

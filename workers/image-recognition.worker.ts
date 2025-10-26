@@ -2,7 +2,7 @@ import { Worker } from "bullmq";
 import { connection } from "../lib/queues/config";
 import { prisma } from "../lib/db";
 import { analyzeProductImage, claudeCircuitBreaker } from "../lib/services/claude";
-import { downloadImage, validateImage } from "../lib/services/storage";
+import { downloadImage, validateImage, uploadProductImage } from "../lib/services/storage";
 import { listingGenerationQueue } from "../lib/queues";
 
 interface ImageRecognitionJob {
@@ -58,19 +58,43 @@ const worker = new Worker<ImageRecognitionJob>(
         `[图片识别] AI 分析完成，置信度: ${analysis.confidence.toFixed(2)}`
       );
 
-      // 6. 保存商品记录
+      // 6. 上传原图到 R2/S3，获取公网 URL
+      job.updateProgress(70);
+      let publicImageUrl: string | undefined;
+
+      try {
+        const userId = (await prisma.workflowExecution.findUnique({
+          where: { id: workflowId },
+          select: { userId: true }
+        }))?.userId || 'unknown';
+
+        const uploadPath = `uploads/${userId}/${workflowId}/original`;
+        const uploadResult = await uploadProductImage(imageBuffer, uploadPath, {
+          generateThumbnail: false, // 原图不需要缩略图
+          resize: { width: 2000, height: 2000 },
+        });
+
+        publicImageUrl = uploadResult.imageUrl;
+        console.log(`[图片识别] 原图已上传到 R2: ${publicImageUrl}`);
+      } catch (uploadError: any) {
+        console.warn(`[图片识别] 上传原图到 R2 失败: ${uploadError.message}`);
+        console.warn(`[图片识别] 将继续使用本地 URL，但图片生成可能无法使用参考图`);
+      }
+
+      // 7. 保存商品记录
       job.updateProgress(80);
       const product = await prisma.product.create({
         data: {
           workflowId,
           imageUrl,
+          publicImageUrl, // 保存公网 URL
           description: analysis.text,
           keywords: analysis.keywords,
           confidence: analysis.confidence,
         },
       });
 
-      // 7. 更新工作流
+      // 8. 更新工作流
       await prisma.workflowExecution.update({
         where: { id: workflowId },
         data: {
@@ -80,12 +104,13 @@ const worker = new Worker<ImageRecognitionJob>(
               completedAt: new Date().toISOString(),
               processingTime: Date.now() - startTime,
               confidence: analysis.confidence,
+              publicImageUrl, // 记录公网 URL
             },
           },
         },
       });
 
-      // 8. 触发下一步：文案生成
+      // 9. 触发下一步：文案生成
       job.updateProgress(90);
       await listingGenerationQueue.add("generate", {
         workflowId,

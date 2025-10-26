@@ -73,7 +73,7 @@ const worker = new Worker<ListingGenerationJob>(
         `[文案生成] 质量评分: ${qualityScore}/100, ${approved ? "自动通过" : "需要审核"}`
       );
 
-      // 6. 保存 Listing
+      // 6. 保存 Listing (包含图片提示词)
       const savedListing = await prisma.listing.create({
         data: {
           productId,
@@ -82,6 +82,7 @@ const worker = new Worker<ListingGenerationJob>(
           description: listing.description,
           bulletPoints: listing.bullet_points,
           keywords: listing.keywords,
+          imagePrompts: listing.image_prompts || [], // 保存 AI 生成的图片提示词
           qualityScore,
           approved,
           version,

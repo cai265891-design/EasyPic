@@ -15,6 +15,7 @@ export interface ListingContent {
   description: string;
   bullet_points: string[];
   keywords: string[];
+  image_prompts?: string[]; // 5 个图片生成提示词
 }
 
 /**
@@ -128,7 +129,8 @@ export async function generateListing(params: {
 
   const systemPrompt = `你是亚马逊金牌卖家的 listing 优化专家。
 
-任务：基于商品描述，创建专业的亚马逊 listing 内容。
+任务：基于商品描述，创建专业的亚马逊 listing 内容，**必须**包含5个图片生成提示词(image_prompts)。
+
 目标市场：${targetMarket}
 商品类别：${category}
 品牌：${brand}
@@ -136,7 +138,8 @@ export async function generateListing(params: {
 ${emphasize.length > 0 ? `重点强调：${emphasize.join(", ")}` : ""}
 ${userFeedback ? `用户反馈：${userFeedback}` : ""}
 
-输出 JSON 格式：
+**重要**:必须严格按以下JSON格式输出,包含所有字段:
+
 {
   "title": "150-200 字符的商品标题，包含品牌+核心关键词+主要特征",
   "description": "250-350 字的详细描述，分 3-4 段说明产品价值、功能、使用方法、品质承诺",
@@ -147,15 +150,23 @@ ${userFeedback ? `用户反馈：${userFeedback}` : ""}
     "【卖点 4 标题】详细说明 30-50 字，展示独特优势",
     "【卖点 5 标题】详细说明 30-50 字，承诺售后服务"
   ],
-  "keywords": ["关键词1", "关键词2", ...]
+  "keywords": ["关键词1", "关键词2", "关键词3", "关键词4", "关键词5"],
+  "image_prompts": [
+    "Professional product photography demonstrating [卖点1的核心功能]. Scene description: [根据卖点1内容设计具体场景，例如'car in follow mode tracking a moving object with motion trails' 或 'product shown at 45-degree angle highlighting main feature']. CRITICAL: Product must match reference image exactly (same colors, shape, design). White studio background, professional lighting, 4K resolution",
+    "Professional product photography demonstrating [卖点2的核心功能]. Scene description: [根据卖点2内容设计具体场景，例如'car performing 360-degree drift with dynamic angle' 或 'side view showing material quality']. CRITICAL: Product must match reference image exactly (same colors, shape, design). White studio background, professional lighting, 4K resolution",
+    "Professional product photography demonstrating [卖点3的核心功能]. Scene description: [根据卖点3内容设计具体场景，例如'car playing with a cat in lifestyle setting' 或 'top-down view showing usage scenario']. CRITICAL: Product must match reference image exactly (same colors, shape, design). Clean background appropriate for the scene, professional lighting, 4K resolution",
+    "Professional product photography highlighting [卖点4的核心特征]. Scene description: [根据卖点4内容设计具体场景，例如'close-up of LED lights glowing with cute round design visible' 或 'detail shot of key feature']. CRITICAL: Product must match reference image exactly (same colors, shape, design). White studio background, dramatic lighting on features, 4K resolution",
+    "Professional product photography highlighting [卖点5的核心功能]. Scene description: [根据卖点5内容设计具体场景，例如'product with USB charging cable showing rechargeable feature' 或 'full product view showing scale and completeness']. CRITICAL: Product must match reference image exactly (same colors, shape, design). White studio background, clean composition, 4K resolution"
+  ]
 }
 
-要求：
-- 使用地道美式英语
-- 符合亚马逊内容政策（不能有夸大宣传、禁用词）
-- 突出产品 USP（独特卖点）
-- 自然融入 SEO 关键词
-- 严格按 JSON 格式输出，不要有其他说明文字`;
+关键要求：
+1. **必须输出所有字段**,包括image_prompts
+2. image_prompts必须是5个元素的数组
+3. 每个image_prompt必须以"Based on the reference image, keep the same product"开头
+4. 使用地道美式英语
+5. 符合亚马逊内容政策
+6. 严格按JSON格式输出,不要有其他说明文字`;
 
   const response = await fetch("https://shuchong.xyz/v1/chat/completions", {
     method: "POST",
@@ -197,6 +208,14 @@ ${userFeedback ? `用户反馈：${userFeedback}` : ""}
 
   // 解析 JSON 响应
   const listing = parseListingResponse(responseText);
+
+  console.log(`[generateListing] AI返回的字段:`, {
+    has_title: !!listing.title,
+    has_bullet_points: !!listing.bullet_points,
+    has_keywords: !!listing.keywords,
+    has_image_prompts: !!listing.image_prompts,
+    image_prompts_count: listing.image_prompts?.length || 0,
+  });
 
   return listing;
 }
@@ -351,8 +370,27 @@ export interface ImageGenerationResult {
  * 使用 Gemini 2.5 Flash 生成商品图片
  */
 export async function generateProductImage(
-  prompt: string
+  prompt: string,
+  referenceImageUrl?: string
 ): Promise<ImageGenerationResult> {
+  // 构建请求体
+  const requestBody: any = {
+    model: "gemini-2.5-flash-image",
+    prompt,
+  };
+
+  // 如果提供了参考图片,添加到请求中(使用 image_urls 数组格式)
+  // 注意:只有当 URL 是公网可访问时才添加
+  if (referenceImageUrl && referenceImageUrl.startsWith('http')) {
+    // 确保不是 localhost 地址
+    if (!referenceImageUrl.includes('localhost') && !referenceImageUrl.includes('127.0.0.1')) {
+      requestBody.image_urls = [referenceImageUrl];
+      console.log(`[图片生成] 使用参考图片: ${referenceImageUrl.substring(0, 80)}...`);
+    } else {
+      console.warn(`[图片生成] 跳过本地参考图片: ${referenceImageUrl}`);
+    }
+  }
+
   // 提交图片生成任务
   const response = await fetch(
     "https://api.evolink.ai/v1/images/generations",
@@ -363,16 +401,16 @@ export async function generateProductImage(
           "Bearer sk-7VXGPwxOk1Q14rICkASMS1IZcDF1lP5GJRqent9cjCQr3K73",
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({
-        model: "gemini-2.5-flash-image",
-        prompt,
-      }),
+      body: JSON.stringify(requestBody),
     }
   );
 
   if (!response.ok) {
+    const errorBody = await response.text();
+    console.error("[图片生成] API 请求失败:", response.status, response.statusText);
+    console.error("[图片生成] 错误响应体:", errorBody);
     throw new Error(
-      `图片生成 API 请求失败: ${response.status} ${response.statusText}`
+      `图片生成 API 请求失败: ${response.status} ${response.statusText} - ${errorBody.substring(0, 200)}`
     );
   }
 
@@ -411,14 +449,29 @@ export async function generateProductImage(
 
       // 任务完成
       if (statusData.status === "completed" || statusData.status === "succeeded") {
-        // 优先从 results 数组中获取图片 URL
-        const imageUrl = statusData.results?.[0] || statusData.data?.[0]?.url || statusData.url || statusData.image_url;
+        // 优先从 results 数组中获取图片 URL,支持多种返回格式
+        const imageUrl =
+          statusData.results?.[0] ||
+          statusData.data?.[0]?.url ||
+          statusData.data?.[0]?.image_url ||
+          statusData.url ||
+          statusData.image_url;
+
         if (!imageUrl) {
-          console.error("图片生成完成但未返回 URL:", JSON.stringify(statusData, null, 2));
-          throw new Error("图片生成完成但未返回图片 URL");
+          console.error("[图片生成] API 返回完成状态但未找到图片 URL");
+          console.error("[图片生成] 完整响应数据:", JSON.stringify(statusData, null, 2));
+          console.error("[图片生成] 尝试过的字段: results[0], data[0].url, data[0].image_url, url, image_url");
+          throw new Error("图片生成完成但未返回图片 URL,请检查 API 响应格式");
+        }
+
+        // 验证 URL 格式
+        if (typeof imageUrl !== 'string' || !imageUrl.startsWith('http')) {
+          console.error("[图片生成] 返回的 imageUrl 格式无效:", imageUrl);
+          throw new Error(`返回的图片 URL 格式无效: ${imageUrl}`);
         }
 
         console.log(`[图片生成] 任务完成: ${taskId}, 用时 ${attempts * 2} 秒`);
+        console.log(`[图片生成] 图片 URL: ${imageUrl}`);
         return {
           imageUrl,
           prompt,
@@ -428,7 +481,10 @@ export async function generateProductImage(
 
       // 任务失败
       if (statusData.status === "failed") {
-        throw new Error(`图片生成任务失败: ${statusData.error || "未知错误"}`);
+        const errorMsg = typeof statusData.error === 'object'
+          ? JSON.stringify(statusData.error)
+          : (statusData.error || "未知错误");
+        throw new Error(`图片生成任务失败: ${errorMsg}`);
       }
 
       console.log(`[图片生成] 任务进行中... (${attempts}/${maxAttempts})`);
@@ -438,13 +494,26 @@ export async function generateProductImage(
   }
 
   // 如果直接返回图片 URL (同步模式)
-  const imageUrl = taskData.results?.[0] || taskData.data?.[0]?.url || taskData.url || taskData.image_url;
+  const imageUrl =
+    taskData.results?.[0] ||
+    taskData.data?.[0]?.url ||
+    taskData.data?.[0]?.image_url ||
+    taskData.url ||
+    taskData.image_url;
 
   if (!imageUrl) {
-    console.error("图片生成 API 响应:", JSON.stringify(taskData, null, 2));
-    throw new Error("图片生成 API 未返回图片 URL");
+    console.error("[图片生成] API 同步响应未找到图片 URL");
+    console.error("[图片生成] 完整响应数据:", JSON.stringify(taskData, null, 2));
+    throw new Error("图片生成 API 未返回图片 URL,请检查 API 响应格式");
   }
 
+  // 验证 URL 格式
+  if (typeof imageUrl !== 'string' || !imageUrl.startsWith('http')) {
+    console.error("[图片生成] 返回的 imageUrl 格式无效:", imageUrl);
+    throw new Error(`返回的图片 URL 格式无效: ${imageUrl}`);
+  }
+
+  console.log(`[图片生成] 同步模式完成,图片 URL: ${imageUrl}`);
   return {
     imageUrl,
     prompt,
@@ -460,8 +529,9 @@ export async function generateProductImages(params: {
   bulletPoints: string[];
   brand?: string;
   style?: string;
+  referenceImageUrl?: string; // 添加参考图片 URL
 }): Promise<ImageGenerationResult[]> {
-  const { productDescription, bulletPoints, brand = "", style = "professional product photography" } = params;
+  const { productDescription, bulletPoints, brand = "", style = "professional product photography", referenceImageUrl } = params;
 
   const prompts = bulletPoints.slice(0, 5).map((bulletPoint, index) => {
     // 提取卖点核心内容（去除中文标题）
@@ -470,13 +540,18 @@ export async function generateProductImages(params: {
       .trim()
       .substring(0, 100);
 
-    return `${style}, ${brand ? `${brand} brand, ` : ""}${productDescription.substring(0, 50)}, highlighting: ${cleanedBulletPoint}. Professional studio lighting, white background, high quality, 4k, product showcase angle ${index + 1}/5`;
+    // 如果有参考图片,明确指示保留原图主体
+    const basePrompt = referenceImageUrl
+      ? `Based on the reference image, create a professional product photography. Keep the same product from the reference image, but show it from angle ${index + 1}/5. ${style}, ${brand ? `${brand} brand, ` : ""}highlighting: ${cleanedBulletPoint}. Professional studio lighting, white background, high quality, 4k`
+      : `${style}, ${brand ? `${brand} brand, ` : ""}${productDescription.substring(0, 50)}, highlighting: ${cleanedBulletPoint}. Professional studio lighting, white background, high quality, 4k, product showcase angle ${index + 1}/5`;
+
+    return basePrompt;
   });
 
-  // 并发生成 5 张图片
+  // 并发生成 5 张图片,传入参考图片
   const results = await Promise.all(
     prompts.map((prompt) =>
-      claudeCircuitBreaker.call(() => generateProductImage(prompt))
+      claudeCircuitBreaker.call(() => generateProductImage(prompt, referenceImageUrl))
     )
   );
 

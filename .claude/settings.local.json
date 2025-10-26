@@ -34,7 +34,21 @@
       "Bash(psql:*)",
       "Bash(docker ps:*)",
       "Read(//dev/fd/**)",
-      "Bash(pnpm run build:*)"
+      "Bash(pnpm run build:*)",
+      "Bash(DATABASE_URL='postgresql://postgres:postgres@localhost:5432/saas_db?schema=public' npx tsx scripts/retry-failed-workflow.ts cmh73qnwm0001bxqxqohktczl)",
+      "Bash(DATABASE_URL='postgresql://postgres:postgres@localhost:5432/saas_starter?schema=public' npx tsx scripts/retry-failed-workflow.ts cmh73qnwm0001bxqxqohktczl)",
+      "WebFetch(domain:api.evolink.ai)",
+      "Bash(DATABASE_URL='postgresql://postgres:postgres@localhost:5432/saas_db?schema=public' npx tsx scripts/check-workflow-status.ts)",
+      "Bash(open:*)",
+      "Bash(DATABASE_URL='postgresql://postgres:postgres@localhost:5432/saas_db?schema=public' npx tsx scripts/debug-workflow.ts)",
+      "Bash(DATABASE_URL='postgresql://postgres:postgres@localhost:5432/saas_starter?schema=public' npx tsx scripts/debug-workflow.ts)",
+      "Bash(npx tsx:*)",
+      "Bash(source .env.local)",
+      "Bash(DATABASE_URL='postgresql://postgres:postgres@localhost:5432/saas_starter?schema=public' npx tsx scripts/test-image-gen-full.ts)",
+      "Bash(DATABASE_URL='postgresql://postgres:postgres@localhost:5432/saas_starter?schema=public' docker exec workflow-postgres psql -U postgres -d saas_starter -c \"SELECT id, \"\"imageUrl\"\", \"\"createdAt\"\" FROM workflow_executions ORDER BY \"\"createdAt\"\" DESC LIMIT 1;\")",
+      "Bash(DATABASE_URL='postgresql://postgres:postgres@localhost:5432/saas_starter?schema=public' npx tsx:*)",
+      "Bash(DATABASE_URL:*)",
+      "Bash(DATABASE_URL='postgresql://postgres:postgres@localhost:5432/saas_starter?schema=public' psql -c \"SELECT \"\"imageUrl\"\" FROM products ORDER BY \"\"createdAt\"\" DESC LIMIT 1;\")"
     ],
     "deny": [],
     "ask": []
