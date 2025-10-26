@@ -161,6 +161,7 @@ export default function ResultPage() {
 
   useEffect(() => {
     fetchProject();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [projectId]);
 
   // Poll for updates if project is not completed
@@ -180,6 +181,7 @@ export default function ResultPage() {
       console.log('[ResultPage] Cleaning up interval');
       clearInterval(interval);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [project?.status]);
 
   const handleRegenerateImage = async (type: Project['images'][number]['type']) => {
@@ -311,12 +313,12 @@ export default function ResultPage() {
 
             {/* 图片生成失败警告 */}
             {project.images.filter(img => img.type !== 'original').length === 0 && (
-              <div className="rounded-lg bg-yellow-50 border border-yellow-200 p-4">
+              <div className="rounded-lg border border-yellow-200 bg-yellow-50 p-4">
                 <div className="flex items-start gap-3">
-                  <AlertCircle className="size-5 text-yellow-600 mt-0.5" />
+                  <AlertCircle className="mt-0.5 size-5 text-yellow-600" />
                   <div className="flex-1">
-                    <h3 className="font-semibold text-yellow-900 mb-1">图片生成失败</h3>
-                    <p className="text-sm text-yellow-800 mb-3">
+                    <h3 className="mb-1 font-semibold text-yellow-900">图片生成失败</h3>
+                    <p className="mb-3 text-sm text-yellow-800">
                       AI 图片生成过程中出现错误,未能生成商品展示图。您可以:
                     </p>
                     <div className="flex gap-2">

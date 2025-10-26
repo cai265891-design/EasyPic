@@ -211,12 +211,12 @@ export default function GeneratePage() {
         >
           {loading ? (
             <>
-              <Loader2 className="h-5 w-5 animate-spin" />
+              <Loader2 className="size-5 animate-spin" />
               生成中...
             </>
           ) : (
             <>
-              <Sparkles className="h-5 w-5" />
+              <Sparkles className="size-5" />
               生成图片和文案
             </>
           )}
