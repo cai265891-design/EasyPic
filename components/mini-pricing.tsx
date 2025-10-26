@@ -7,41 +7,41 @@ const plans = [
   {
     name: 'Starter',
     price: '$0',
-    period: 'forever',
-    credits: '50 credits',
-    features: ['5 projects/month', 'All image types', 'Basic copy generation', 'Email support'],
-    cta: 'Start Free',
+    period: '永久免费',
+    credits: '50 积分',
+    features: ['5 个项目/月', '所有图片类型', '基础文案生成', '邮件支持'],
+    cta: '免费开始',
     href: '/dashboard',
   },
   {
     name: 'Pro',
     price: '$29',
-    period: 'per month',
-    credits: '300 credits',
+    period: '每月',
+    credits: '300 积分',
     features: [
-      '30 projects/month',
-      'All image types',
-      'Advanced copy generation',
-      'Priority support',
-      'Custom styles',
+      '30 个项目/月',
+      '所有图片类型',
+      '高级文案生成',
+      '优先支持',
+      '自定义风格',
     ],
-    cta: 'Get Started',
+    cta: '立即开始',
     href: '/pricing',
     popular: true,
   },
   {
     name: 'Agency',
     price: '$99',
-    period: 'per month',
-    credits: '1200 credits',
+    period: '每月',
+    credits: '1200 积分',
     features: [
-      '120 projects/month',
-      'All features',
-      'API access',
-      'Dedicated support',
-      'Team collaboration',
+      '120 个项目/月',
+      '所有功能',
+      'API 访问',
+      '专属支持',
+      '团队协作',
     ],
-    cta: 'Contact Sales',
+    cta: '联系销售',
     href: '/pricing',
   },
 ];
@@ -51,9 +51,9 @@ export function MiniPricing() {
     <section className="border-t py-16 sm:py-24">
       <div className="container px-6">
         <div className="mx-auto max-w-3xl text-center">
-          <h2 className="mb-4 text-3xl font-bold sm:text-4xl">Simple, Transparent Pricing</h2>
+          <h2 className="mb-4 text-3xl font-bold sm:text-4xl">简单透明的定价</h2>
           <p className="mb-12 text-lg text-muted-foreground">
-            Choose the plan that fits your needs. No hidden fees.
+            选择适合您的套餐。没有隐藏费用。
           </p>
         </div>
 
@@ -66,7 +66,7 @@ export function MiniPricing() {
               {plan.popular && (
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2">
                   <span className="rounded-full bg-primary px-3 py-1 text-xs font-semibold text-primary-foreground">
-                    MOST POPULAR
+                    最受欢迎
                   </span>
                 </div>
               )}

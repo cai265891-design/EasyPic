@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { signIn } from "next-auth/react";
 import { useForm } from "react-hook-form";
@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Icons } from "@/components/shared/icons";
+import { createClient } from "@/lib/supabase/client";
 
 interface UserAuthFormProps extends React.HTMLAttributes<HTMLDivElement> {
   type?: string;
@@ -32,27 +33,53 @@ export function UserAuthForm({ className, type, ...props }: UserAuthFormProps) {
   const [isLoading, setIsLoading] = React.useState<boolean>(false);
   const [isGoogleLoading, setIsGoogleLoading] = React.useState<boolean>(false);
   const searchParams = useSearchParams();
+  const router = useRouter();
+  const supabase = createClient();
 
   async function onSubmit(data: FormData) {
     setIsLoading(true);
 
-    const signInResult = await signIn("resend", {
-      email: data.email.toLowerCase(),
-      redirect: false,
-      callbackUrl: searchParams?.get("from") || "/dashboard",
-    });
+    try {
+      console.log("开始 Supabase 邮箱登录...", data.email);
 
-    setIsLoading(false);
+      const { error } = await supabase.auth.signInWithOtp({
+        email: data.email.toLowerCase(),
+        options: {
+          emailRedirectTo: `${window.location.origin}/auth/callback?next=${searchParams?.get("from") || "/dashboard"}`,
+        },
+      });
 
-    if (!signInResult?.ok) {
-      return toast.error("Something went wrong.", {
-        description: "Your sign in request failed. Please try again."
+      if (error) {
+        console.error("Supabase 登录错误:", error);
+        setIsLoading(false);
+
+        // 检查是否是速率限制错误
+        if (error.message.includes("request this after")) {
+          const match = error.message.match(/after (\d+) seconds/);
+          const seconds = match ? match[1] : "60";
+          return toast.error("请求过于频繁", {
+            description: `为了安全,请等待 ${seconds} 秒后再试。或者使用不同的邮箱地址。`,
+            duration: 5000,
+          });
+        }
+
+        return toast.error("登录失败", {
+          description: error.message,
+        });
+      }
+
+      console.log("登录邮件已发送");
+      setIsLoading(false);
+      return toast.success("查看您的邮箱", {
+        description: "我们已向您发送了登录链接,请检查您的邮箱(包括垃圾邮件文件夹)",
+      });
+    } catch (error) {
+      console.error("登录异常:", error);
+      setIsLoading(false);
+      return toast.error("发生错误", {
+        description: "登录请求失败,请重试",
       });
     }
-
-    return toast.success("Check your email", {
-      description: "We sent you a login link. Be sure to check your spam too.",
-    });
   }
 
   return (
@@ -83,36 +110,10 @@ export function UserAuthForm({ className, type, ...props }: UserAuthFormProps) {
             {isLoading && (
               <Icons.spinner className="mr-2 size-4 animate-spin" />
             )}
-            {type === "register" ? "Sign Up with Email" : "Sign In with Email"}
+            {type === "register" ? "使用邮箱注册" : "使用邮箱登录"}
           </button>
         </div>
       </form>
-      <div className="relative">
-        <div className="absolute inset-0 flex items-center">
-          <span className="w-full border-t" />
-        </div>
-        <div className="relative flex justify-center text-xs uppercase">
-          <span className="bg-background px-2 text-muted-foreground">
-            Or continue with
-          </span>
-        </div>
-      </div>
-      <button
-        type="button"
-        className={cn(buttonVariants({ variant: "outline" }))}
-        onClick={() => {
-          setIsGoogleLoading(true);
-          signIn("google");
-        }}
-        disabled={isLoading || isGoogleLoading}
-      >
-        {isGoogleLoading ? (
-          <Icons.spinner className="mr-2 size-4 animate-spin" />
-        ) : (
-          <Icons.google className="mr-2 size-4" />
-        )}{" "}
-        Google
-      </button>
     </div>
   );
 }

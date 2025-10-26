@@ -39,21 +39,40 @@ export default function GeneratePage() {
 
     setLoading(true);
     try {
-      const project = await createProject({
-        name: projectName || `Project ${new Date().toLocaleDateString()}`,
-        files,
-        options: {
-          productName: projectName,
-          keyFeatures,
-          specs,
-          category,
-          style,
-          language,
-        },
+      // 1. 上传图片
+      const formData = new FormData();
+      formData.append('file', files[0]);
+
+      const uploadRes = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
       });
 
-      // Redirect to result page
-      router.push(`/result/${project.id}`);
+      if (!uploadRes.ok) {
+        throw new Error('图片上传失败');
+      }
+
+      const { imageUrl } = await uploadRes.json();
+
+      // 2. 启动工作流
+      const workflowRes = await fetch('/api/workflows/start', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          imageUrl,
+          category,
+          brand: projectName,
+        }),
+      });
+
+      if (!workflowRes.ok) {
+        throw new Error('启动工作流失败');
+      }
+
+      const { workflowId } = await workflowRes.json();
+
+      // 3. 跳转到结果页面
+      router.push(`/result/${workflowId}`);
     } catch (error) {
       console.error('Failed to create project:', error);
       alert('创建项目失败，请重试。');

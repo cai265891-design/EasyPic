@@ -19,7 +19,7 @@ export async function projectDemo(id: string = 'demo-001'): Promise<Project> {
       {
         id: 'img-orig',
         type: 'original',
-        url: '/examples/before.jpg',
+        url: 'https://images.unsplash.com/photo-1602143407151-7111542de6e8?w=1200&h=1200&fit=crop',
         width: 1200,
         height: 1200,
         fileSize: 320000,
@@ -27,7 +27,7 @@ export async function projectDemo(id: string = 'demo-001'): Promise<Project> {
       {
         id: 'img-main',
         type: 'main',
-        url: '/examples/after.jpg',
+        url: 'https://images.unsplash.com/photo-1602143407151-7111542de6e8?w=2000&h=2000&fit=crop',
         width: 2000,
         height: 2000,
         fileSize: 540000,
@@ -35,7 +35,7 @@ export async function projectDemo(id: string = 'demo-001'): Promise<Project> {
       {
         id: 'img-life',
         type: 'lifestyle',
-        url: '/examples/after.jpg',
+        url: 'https://images.unsplash.com/photo-1523362628745-0c100150b504?w=2000&h=2000&fit=crop',
         width: 2000,
         height: 2000,
         fileSize: 540000,
@@ -43,7 +43,7 @@ export async function projectDemo(id: string = 'demo-001'): Promise<Project> {
       {
         id: 'img-detl',
         type: 'detail',
-        url: '/examples/after.jpg',
+        url: 'https://images.unsplash.com/photo-1603073203252-35dedc2c1179?w=2000&h=2000&fit=crop',
         width: 2000,
         height: 2000,
         fileSize: 540000,
@@ -51,7 +51,7 @@ export async function projectDemo(id: string = 'demo-001'): Promise<Project> {
       {
         id: 'img-dim',
         type: 'dimension',
-        url: '/examples/after.jpg',
+        url: 'https://images.unsplash.com/photo-1590736969955-71cc94901144?w=2000&h=2000&fit=crop',
         width: 2000,
         height: 2000,
         fileSize: 540000,
@@ -59,7 +59,7 @@ export async function projectDemo(id: string = 'demo-001'): Promise<Project> {
       {
         id: 'img-feat',
         type: 'feature',
-        url: '/examples/after.jpg',
+        url: 'https://images.unsplash.com/photo-1584464491033-06628f3a6b7b?w=2000&h=2000&fit=crop',
         width: 2000,
         height: 2000,
         fileSize: 540000,

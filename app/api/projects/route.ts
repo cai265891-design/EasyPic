@@ -19,15 +19,18 @@ export async function POST(req: NextRequest) {
     if (process.env.NEXT_PUBLIC_USE_MOCK === 'true') {
       const body = await req.json();
 
-      // Simulate project creation
-      const mockProject = {
-        id: `demo-${Date.now()}`,
-        name: body.name || 'Untitled Project',
-        status: 'analyzing',
-        createdAt: new Date().toISOString(),
-        images: [],
-        copywriting: null,
-      };
+      // Import mock functions
+      const { projectDemo, progressTicker } = await import('@/lib/mock');
+
+      // Create demo project
+      const projectId = `demo-${Date.now()}`;
+      const mockProject = await projectDemo(projectId);
+
+      // Override with user inputs
+      mockProject.name = body.name || 'Untitled Project';
+
+      // Trigger async progress updates
+      progressTicker(projectId);
 
       return NextResponse.json(mockProject, { status: 201 });
     }

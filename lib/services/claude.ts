@@ -21,9 +21,21 @@ export interface ListingContent {
  * 使用 GPT-4o Vision 分析商品图片
  */
 export async function analyzeProductImage(
-  _imageBuffer: Buffer,
-  imageUrl: string
+  imageBuffer: Buffer,
+  _imageUrl: string
 ): Promise<VisionAnalysisResult> {
+  // 压缩图片并转换为 base64(限制大小以避免API超时)
+  const sharp = require('sharp');
+  const compressedBuffer = await sharp(imageBuffer)
+    .resize(800, 800, { fit: 'inside', withoutEnlargement: true })
+    .jpeg({ quality: 85 })
+    .toBuffer();
+
+  const base64Image = compressedBuffer.toString('base64');
+  const dataUrl = `data:image/jpeg;base64,${base64Image}`;
+
+  console.log(`[图片识别] 原始大小: ${imageBuffer.length} bytes, 压缩后: ${compressedBuffer.length} bytes`);
+
   const response = await fetch("https://shuchong.xyz/v1/chat/completions", {
     method: "POST",
     headers: {
@@ -40,19 +52,26 @@ export async function analyzeProductImage(
           content: [
             {
               type: "text",
-              text: `你是专业的电商产品分析师。请仔细观察图片中的商品，识别并描述商品的主体信息，包括：
-- 商品类型
-- 材质颜色
-- 关键特征
-- 使用场景
-- 目标用户
+              text: `你是专业的电商产品分析师。请仔细观察图片中的**实物商品本身**，忽略图片上的文字、背景装饰等营销元素。
 
-用简洁专业的语言输出，不超过 200 字。`,
+请识别并描述商品的主体信息，包括：
+- **商品类型**: 这是什么产品？(例如：玩具车、文具、电子产品等)
+- **材质颜色**: 商品的主要材质和颜色
+- **关键特征**: 商品的核心功能和设计特点
+- **使用场景**: 适合在什么场合使用
+- **目标用户**: 主要面向哪类人群
+
+重要提示：
+1. 专注于识别图片中的**实际物品**，不要被文字描述误导
+2. 如果看到玩具车就说玩具车，看到文具就说文具，实事求是
+3. 用简洁专业的中文输出，不超过 200 字
+
+请开始分析：`,
             },
             {
               type: "image_url",
               image_url: {
-                url: imageUrl,
+                url: dataUrl,  // 使用 base64 data URL
               },
             },
           ],
@@ -334,6 +353,7 @@ export interface ImageGenerationResult {
 export async function generateProductImage(
   prompt: string
 ): Promise<ImageGenerationResult> {
+  // 提交图片生成任务
   const response = await fetch(
     "https://api.evolink.ai/v1/images/generations",
     {
@@ -356,20 +376,79 @@ export async function generateProductImage(
     );
   }
 
-  const data = await response.json();
+  const taskData = await response.json();
 
-  // 解析响应格式
-  const imageUrl = data.data?.[0]?.url || data.url || data.image_url;
+  // 如果返回的是异步任务,需要轮询获取结果
+  if (taskData.status === "pending" && taskData.id) {
+    const taskId = taskData.id;
+    const maxAttempts = 60; // 最多等待 60 次 (约 2 分钟)
+    let attempts = 0;
+
+    console.log(`[图片生成] 任务已提交: ${taskId}, 预计需要 ${taskData.task_info?.estimated_time || 40} 秒`);
+
+    while (attempts < maxAttempts) {
+      // 等待 2 秒再查询
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+      attempts++;
+
+      // 查询任务状态
+      const statusResponse = await fetch(
+        `https://api.evolink.ai/v1/tasks/${taskId}`,
+        {
+          method: "GET",
+          headers: {
+            Authorization:
+              "Bearer sk-7VXGPwxOk1Q14rICkASMS1IZcDF1lP5GJRqent9cjCQr3K73",
+          },
+        }
+      );
+
+      if (!statusResponse.ok) {
+        throw new Error(`查询任务状态失败: ${statusResponse.status}`);
+      }
+
+      const statusData = await statusResponse.json();
+
+      // 任务完成
+      if (statusData.status === "completed" || statusData.status === "succeeded") {
+        // 优先从 results 数组中获取图片 URL
+        const imageUrl = statusData.results?.[0] || statusData.data?.[0]?.url || statusData.url || statusData.image_url;
+        if (!imageUrl) {
+          console.error("图片生成完成但未返回 URL:", JSON.stringify(statusData, null, 2));
+          throw new Error("图片生成完成但未返回图片 URL");
+        }
+
+        console.log(`[图片生成] 任务完成: ${taskId}, 用时 ${attempts * 2} 秒`);
+        return {
+          imageUrl,
+          prompt,
+          revisedPrompt: statusData.data?.[0]?.revised_prompt || statusData.revised_prompt,
+        };
+      }
+
+      // 任务失败
+      if (statusData.status === "failed") {
+        throw new Error(`图片生成任务失败: ${statusData.error || "未知错误"}`);
+      }
+
+      console.log(`[图片生成] 任务进行中... (${attempts}/${maxAttempts})`);
+    }
+
+    throw new Error("图片生成超时,请稍后重试");
+  }
+
+  // 如果直接返回图片 URL (同步模式)
+  const imageUrl = taskData.results?.[0] || taskData.data?.[0]?.url || taskData.url || taskData.image_url;
 
   if (!imageUrl) {
-    console.error("图片生成 API 响应:", JSON.stringify(data, null, 2));
+    console.error("图片生成 API 响应:", JSON.stringify(taskData, null, 2));
     throw new Error("图片生成 API 未返回图片 URL");
   }
 
   return {
     imageUrl,
     prompt,
-    revisedPrompt: data.data?.[0]?.revised_prompt || data.revised_prompt,
+    revisedPrompt: taskData.data?.[0]?.revised_prompt || taskData.revised_prompt,
   };
 }
 

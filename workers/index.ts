@@ -3,6 +3,10 @@
  * 启动所有队列的 Worker
  */
 
+// 加载环境变量 (必须在所有其他导入之前)
+import { config } from "dotenv";
+config({ path: ".env.local" });
+
 import "./image-recognition.worker";
 import "./listing-generation.worker";
 import "./image-generation.worker";

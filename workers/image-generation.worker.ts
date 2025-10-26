@@ -83,29 +83,15 @@ const worker = new Worker<ImageGenerationJob>(
         console.log(`[图片生成] 处理第 ${i + 1}/5 张图片...`);
 
         try {
-          // 下载 AI 生成的图片
-          const imageBuffer = await downloadImage(generated.imageUrl);
-
-          // 上传到 S3/R2
-          const path = `products/${workflowId}/images/v${version}-${i}`;
-          const uploaded = await uploadProductImage(imageBuffer, path, {
-            generateThumbnail: true,
-            resize: { width: 2000, height: 2000 },
-          });
-
-          uploadedImages.push({
-            imageUrl: uploaded.imageUrl,
-            thumbnailUrl: uploaded.thumbnailUrl,
-            prompt: generated.prompt,
-            index: i,
-          });
+          // 临时方案:直接使用 AI 生成的图片 URL,跳过 S3 上传
+          // TODO: 配置 S3/R2 后再启用上传功能
 
           // 保存 ProductImage 记录
           await prisma.productImage.create({
             data: {
               imageSetId: imageSet.id,
-              imageUrl: uploaded.imageUrl,
-              thumbnailUrl: uploaded.thumbnailUrl,
+              imageUrl: generated.imageUrl,
+              thumbnailUrl: generated.imageUrl,
               prompt: generated.prompt,
               bulletPoint: bulletPoints[i] || "",
               style: "professional Amazon product photography",
@@ -113,9 +99,18 @@ const worker = new Worker<ImageGenerationJob>(
             },
           });
 
+          // 数据库保存成功后再添加到数组
+          uploadedImages.push({
+            imageUrl: generated.imageUrl,
+            thumbnailUrl: generated.imageUrl, // 暂时使用原图作为缩略图
+            prompt: generated.prompt,
+            index: i,
+          });
+
           job.updateProgress(50 + (i + 1) * 8); // 50% → 90%
         } catch (error: any) {
           console.error(`[图片生成] 第 ${i + 1} 张图片处理失败:`, error.message);
+          console.error(`[图片生成] 错误详情:`, error);
           // 继续处理其他图片，不中断整个流程
         }
       }

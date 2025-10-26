@@ -54,27 +54,6 @@ export function NavBar({ scroll = false }: NavBarProps) {
               {siteConfig.name}
             </span>
           </Link>
-
-          {links && links.length > 0 ? (
-            <nav className="hidden gap-6 md:flex">
-              {links.map((item, index) => (
-                <Link
-                  key={index}
-                  href={item.disabled ? "#" : item.href}
-                  prefetch={true}
-                  className={cn(
-                    "flex items-center text-lg font-medium transition-colors hover:text-foreground/80 sm:text-sm",
-                    item.href.startsWith(`/${selectedLayout}`)
-                      ? "text-foreground"
-                      : "text-foreground/60",
-                    item.disabled && "cursor-not-allowed opacity-80",
-                  )}
-                >
-                  {item.title}
-                </Link>
-              ))}
-            </nav>
-          ) : null}
         </div>
 
         <div className="flex items-center space-x-3">
@@ -111,7 +90,7 @@ export function NavBar({ scroll = false }: NavBarProps) {
                 size="sm"
                 rounded="full"
               >
-                <span>Dashboard</span>
+                <span>控制台</span>
               </Button>
             </Link>
           ) : status === "unauthenticated" ? (
@@ -122,7 +101,7 @@ export function NavBar({ scroll = false }: NavBarProps) {
               rounded="full"
               onClick={() => setShowSignInModal(true)}
             >
-              <span>Sign In</span>
+              <span>登录</span>
               <Icons.arrowRight className="size-4" />
             </Button>
           ) : (

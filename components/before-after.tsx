@@ -7,9 +7,9 @@ export function BeforeAfter() {
     <section className="py-16 sm:py-24">
       <div className="container px-6">
         <div className="mx-auto max-w-3xl text-center">
-          <h2 className="mb-4 text-3xl font-bold sm:text-4xl">See the Transformation</h2>
+          <h2 className="mb-4 text-3xl font-bold sm:text-4xl">见证转变</h2>
           <p className="mb-12 text-lg text-muted-foreground">
-            From a single photo to 5 professional Amazon images
+            从一张照片到 5 张专业的 Amazon 商品展示图
           </p>
         </div>
 
@@ -18,7 +18,7 @@ export function BeforeAfter() {
           <div className="space-y-4">
             <div className="text-center">
               <span className="inline-block rounded-full bg-muted px-4 py-1.5 text-sm font-medium">
-                Before
+                原图
               </span>
             </div>
             <Card className="overflow-hidden">
@@ -33,7 +33,7 @@ export function BeforeAfter() {
               </div>
               <div className="p-4">
                 <p className="text-center text-sm text-muted-foreground">
-                  Original product photo
+                  原始产品图片
                 </p>
               </div>
             </Card>
@@ -48,11 +48,11 @@ export function BeforeAfter() {
           <div className="space-y-4">
             <div className="text-center">
               <span className="inline-block rounded-full bg-primary px-4 py-1.5 text-sm font-medium text-primary-foreground">
-                After
+                生成后
               </span>
             </div>
             <div className="grid grid-cols-2 gap-3">
-              {['Main', 'Lifestyle', 'Detail', 'Dimension', 'Feature'].slice(0, 4).map((type, idx) => (
+              {['主图', '场景图', '细节图', '尺寸图', '功能图'].slice(0, 4).map((type, idx) => (
                 <Card key={idx} className="overflow-hidden">
                   <div className="relative aspect-square bg-white">
                     <Image
@@ -70,7 +70,7 @@ export function BeforeAfter() {
               ))}
             </div>
             <p className="text-center text-sm text-muted-foreground">
-              + SEO-optimized copy
+              + SEO 优化的商品文案
             </p>
           </div>
         </div>

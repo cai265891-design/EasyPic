@@ -9,10 +9,18 @@ const useMock = process.env.NEXT_PUBLIC_USE_MOCK === 'true';
  */
 export async function createProject(payload: CreateProjectPayload): Promise<Project> {
   if (useMock) {
-    // Mock: create project and simulate progress
-    const proj = await projectDemo();
-    progressTicker(proj.id); // Async status updates
-    return proj;
+    // Mock: create project via API route
+    const res = await fetch('/api/projects', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: payload.name,
+        options: payload.options,
+      }),
+    });
+
+    if (!res.ok) throw new Error('Failed to create project');
+    return res.json();
   }
 
   // TODO: Real implementation
@@ -39,16 +47,10 @@ export async function createProject(payload: CreateProjectPayload): Promise<Proj
  * TODO: Replace with actual API call
  */
 export async function getProject(id: string): Promise<Project> {
-  if (useMock) {
-    return projectDemo(id);
-  }
-
-  // TODO: Real implementation
-  // const res = await fetch(`/api/projects/${id}`);
-  // if (!res.ok) throw new Error('Failed to fetch project');
-  // return res.json();
-
-  throw new Error('Not implemented - set NEXT_PUBLIC_USE_MOCK=true to use mock data');
+  // Both mock and real implementation use the same API route
+  const res = await fetch(`/api/projects/${id}`);
+  if (!res.ok) throw new Error('Failed to fetch project');
+  return res.json();
 }
 
 /**

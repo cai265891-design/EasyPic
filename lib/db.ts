@@ -1,5 +1,5 @@
 import { PrismaClient } from "@prisma/client"
-import "server-only";
+// import "server-only"; // Commented out for worker compatibility
 
 declare global {
   // eslint-disable-next-line no-var

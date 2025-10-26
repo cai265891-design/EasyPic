@@ -45,7 +45,38 @@ export default function ResultPage() {
 
   const fetchProject = async () => {
     try {
-      const data = await getProject(projectId);
+      // 调用工作流 API
+      const res = await fetch(`/api/workflows/${projectId}`);
+      if (!res.ok) throw new Error('Failed to fetch workflow');
+
+      const workflow = await res.json();
+      console.log('[ResultPage] Fetched workflow:', projectId, 'status:', workflow.status);
+
+      // 转换为 Project 格式
+      const data: Project = {
+        id: workflow.id,
+        name: `${workflow.product?.description?.split(/[,，。.]/)[0] || '商品'} - Listing 项目`,
+        status: mapWorkflowStatus(workflow.status, workflow),
+        createdAt: workflow.createdAt,
+        images: buildImages(workflow),
+        copywriting: workflow.listing ? {
+          title: workflow.listing.title,
+          bulletPoints: workflow.listing.bulletPoints,
+          description: workflow.listing.description,
+          language: 'en',
+        } : null,
+        analysis: workflow.product ? {
+          category: workflow.input?.category || 'general',
+          keywords: workflow.product.keywords,
+          productType: workflow.product.description?.split(/[,，]/)[0] || 'Product',
+          mainColor: '',
+          material: '',
+          keyFeatures: [],
+          detailPoints: [],
+          suggestedScenes: [],
+        } : undefined,
+      };
+
       setProject(data);
       setError(null);
     } catch (err) {
@@ -56,6 +87,63 @@ export default function ResultPage() {
     }
   };
 
+  // 映射工作流状态到项目状态
+  const mapWorkflowStatus = (status: string, workflow: any): Project['status'] => {
+    // 如果有产品和listing数据,即使FAILED也认为部分成功
+    if (status === 'FAILED' && workflow.product && workflow.listing) {
+      return 'completed'; // 显示为完成,图片生成失败不影响其他数据展示
+    }
+
+    switch (status) {
+      case 'PENDING': return 'pending';
+      case 'PROCESSING': return 'analyzing';
+      case 'COMPLETED': return 'completed';
+      case 'FAILED': return 'failed';
+      default: return 'analyzing';
+    }
+  };
+
+  // 构建图片数组
+  const buildImages = (workflow: any): Project['images'] => {
+    const images: Project['images'] = [];
+
+    // 原图
+    if (workflow.input?.imageUrl) {
+      images.push({
+        id: 'original',
+        type: 'original',
+        url: workflow.input.imageUrl,
+        width: 1200,
+        height: 1200,
+        fileSize: 0,
+      });
+    }
+
+    // 生成的图片
+    if (workflow.images?.items) {
+      const typeMap: { [key: number]: Project['images'][number]['type'] } = {
+        0: 'main',
+        1: 'lifestyle',
+        2: 'detail',
+        3: 'dimension',
+        4: 'feature',
+      };
+
+      workflow.images.items.forEach((img: any, index: number) => {
+        images.push({
+          id: img.id,
+          type: typeMap[index] || 'main',
+          url: img.url,
+          width: 2000,
+          height: 2000,
+          fileSize: 0,
+        });
+      });
+    }
+
+    return images;
+  };
+
   useEffect(() => {
     fetchProject();
   }, [projectId]);
@@ -63,14 +151,20 @@ export default function ResultPage() {
   // Poll for updates if project is not completed
   useEffect(() => {
     if (!project || project.status === 'completed' || project.status === 'failed') {
+      console.log('[ResultPage] Polling stopped. Status:', project?.status);
       return;
     }
 
+    console.log('[ResultPage] Starting polling for status:', project.status);
     const interval = setInterval(() => {
+      console.log('[ResultPage] Polling...');
       fetchProject();
     }, 2000); // Poll every 2 seconds
 
-    return () => clearInterval(interval);
+    return () => {
+      console.log('[ResultPage] Cleaning up interval');
+      clearInterval(interval);
+    };
   }, [project?.status]);
 
   const handleRegenerateImage = async (type: Project['images'][number]['type']) => {
@@ -199,7 +293,11 @@ export default function ResultPage() {
                 全部重新生成
               </Button>
             </div>
-            <ImageGrid images={project.images} onRegenerate={handleRegenerateImage} />
+            <ImageGrid
+              images={project.images}
+              onRegenerate={handleRegenerateImage}
+              isGenerating={isProcessing}
+            />
           </TabsContent>
 
           <TabsContent value="copy" className="space-y-4">
