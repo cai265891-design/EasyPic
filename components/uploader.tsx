@@ -175,7 +175,7 @@ export function Uploader({
                   <X className="size-4" />
                 </Button>
               </div>
-              <div className="absolute bottom-0 inset-x-0 bg-black/60 px-2 py-1">
+              <div className="absolute inset-x-0 bottom-0 bg-black/60 px-2 py-1">
                 <p className="truncate text-xs text-white">{files[idx]?.name}</p>
               </div>
             </div>

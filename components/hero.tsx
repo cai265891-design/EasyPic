@@ -11,7 +11,7 @@ export function Hero() {
         <div className="mx-auto max-w-4xl text-center">
           {/* Badge */}
           <div className="mb-8 inline-flex items-center gap-2 rounded-full border bg-background/60 px-4 py-1.5 text-sm backdrop-blur-sm">
-            <Sparkles className="h-4 w-4 text-primary" />
+            <Sparkles className="size-4 text-primary" />
             <span>AI 驱动的亚马逊图片生成器</span>
           </div>
 
@@ -33,7 +33,7 @@ export function Hero() {
           <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
             <Link href="/generate">
               <Button size="lg" className="gap-2">
-                开始生成 <ArrowRight className="h-4 w-4" />
+                开始生成 <ArrowRight className="size-4" />
               </Button>
             </Link>
             <Link href="/pricing">
@@ -63,8 +63,8 @@ export function Hero() {
 
       {/* Background decoration */}
       <div className="absolute inset-0 -z-10 overflow-hidden">
-        <div className="absolute -top-40 right-0 h-96 w-96 rounded-full bg-primary/5 blur-3xl"></div>
-        <div className="absolute -bottom-40 left-0 h-96 w-96 rounded-full bg-orange-500/5 blur-3xl"></div>
+        <div className="absolute -top-40 right-0 size-96 rounded-full bg-primary/5 blur-3xl"></div>
+        <div className="absolute -bottom-40 left-0 size-96 rounded-full bg-orange-500/5 blur-3xl"></div>
       </div>
     </section>
   );
