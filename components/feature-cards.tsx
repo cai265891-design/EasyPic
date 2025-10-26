@@ -37,7 +37,7 @@ export function FeatureCards() {
           {features.map((feature, idx) => (
             <Card key={idx} className="relative overflow-hidden border-2">
               <CardContent className="p-6">
-                <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
+                <div className="mb-4 inline-flex size-12 items-center justify-center rounded-lg bg-primary/10">
                   <feature.icon className="h-6 w-6 text-primary" />
                 </div>
                 <h3 className="mb-2 text-xl font-semibold">{feature.title}</h3>

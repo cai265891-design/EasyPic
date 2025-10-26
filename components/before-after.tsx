@@ -41,7 +41,7 @@ export function BeforeAfter() {
 
           {/* Arrow */}
           <div className="hidden items-center justify-center lg:flex">
-            <ArrowRight className="h-12 w-12 text-muted-foreground" />
+            <ArrowRight className="size-12 text-muted-foreground" />
           </div>
 
           {/* After */}

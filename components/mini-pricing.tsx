@@ -84,7 +84,7 @@ export function MiniPricing() {
                 <ul className="space-y-3">
                   {plan.features.map((feature, i) => (
                     <li key={i} className="flex items-center gap-2">
-                      <Check className="h-4 w-4 text-primary" />
+                      <Check className="size-4 text-primary" />
                       <span className="text-sm">{feature}</span>
                     </li>
                   ))}

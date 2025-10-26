@@ -18,7 +18,7 @@ export function UsageBar({ credits, maxCredits, projectsThisMonth }: UsageBarPro
     <Card className="p-4">
       <div className="mb-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Coins className="h-4 w-4 text-primary" />
+          <Coins className="size-4 text-primary" />
           <span className="text-sm font-medium">Credits</span>
         </div>
         <span className="text-sm font-bold">

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useCallback } from 'react';
+import Image from 'next/image';
 import { Upload, X, Image as ImageIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -130,7 +131,7 @@ export function Uploader({
 
         <div className="flex flex-col items-center gap-4 text-center">
           <div className="rounded-full bg-primary/10 p-4">
-            <Upload className="h-8 w-8 text-primary" />
+            <Upload className="size-8 text-primary" />
           </div>
           <div>
             <p className="text-lg font-medium">拖拽图片到此处</p>
@@ -154,25 +155,27 @@ export function Uploader({
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
           {previews.map((preview, idx) => (
             <div key={idx} className="group relative aspect-square overflow-hidden rounded-lg border">
-              <img
+              <Image
                 src={preview}
                 alt={`Preview ${idx + 1}`}
-                className="h-full w-full object-cover"
+                fill
+                className="object-cover"
+                unoptimized
               />
               <div className="absolute inset-0 bg-black/40 opacity-0 transition-opacity group-hover:opacity-100">
                 <Button
                   variant="destructive"
                   size="icon"
-                  className="absolute right-2 top-2 h-8 w-8"
+                  className="absolute right-2 top-2 size-8"
                   onClick={(e) => {
                     e.stopPropagation();
                     removeFile(idx);
                   }}
                 >
-                  <X className="h-4 w-4" />
+                  <X className="size-4" />
                 </Button>
               </div>
-              <div className="absolute bottom-0 left-0 right-0 bg-black/60 px-2 py-1">
+              <div className="absolute bottom-0 inset-x-0 bg-black/60 px-2 py-1">
                 <p className="truncate text-xs text-white">{files[idx]?.name}</p>
               </div>
             </div>

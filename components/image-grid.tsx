@@ -66,7 +66,7 @@ export function ImageGrid({ images, onRegenerate, isGenerating = false }: ImageG
                 {isPlaceholder ? (
                   // 加载中占位符
                   <div className="flex h-full flex-col items-center justify-center gap-3 bg-gradient-to-br from-gray-100 to-gray-200">
-                    <Loader2 className="h-12 w-12 animate-spin text-gray-400" />
+                    <Loader2 className="size-12 animate-spin text-gray-400" />
                     <p className="text-sm text-gray-500">正在生成中...</p>
                   </div>
                 ) : (
@@ -111,7 +111,7 @@ export function ImageGrid({ images, onRegenerate, isGenerating = false }: ImageG
                 link.click();
               }}
             >
-              <Download className="mr-2 h-4 w-4" />
+              <Download className="mr-2 size-4" />
               下载
             </Button>
             {onRegenerate && (
@@ -121,7 +121,7 @@ export function ImageGrid({ images, onRegenerate, isGenerating = false }: ImageG
                 disabled={isPlaceholder}
                 onClick={() => onRegenerate(img.type)}
               >
-                <RefreshCw className="h-4 w-4" />
+                <RefreshCw className="size-4" />
               </Button>
             )}
           </CardFooter>
