@@ -36,12 +36,12 @@ export function DownloadZipButton({ projectId, disabled }: DownloadZipButtonProp
     >
       {isDownloading ? (
         <>
-          <Loader2 className="h-4 w-4 animate-spin" />
+          <Loader2 className="size-4 animate-spin" />
           Preparing ZIP...
         </>
       ) : (
         <>
-          <Download className="h-4 w-4" />
+          <Download className="size-4" />
           Download All (ZIP)
         </>
       )}

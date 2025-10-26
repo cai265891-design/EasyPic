@@ -64,12 +64,12 @@ export function CopywriterPanel({ value, onChange, readOnly = false }: Copywrite
         <Button variant="outline" size="sm" onClick={handleCopyAll}>
           {copied ? (
             <>
-              <Check className="mr-2 h-4 w-4" />
+              <Check className="mr-2 size-4" />
               Copied!
             </>
           ) : (
             <>
-              <Copy className="mr-2 h-4 w-4" />
+              <Copy className="mr-2 size-4" />
               Copy All
             </>
           )}
@@ -102,7 +102,7 @@ export function CopywriterPanel({ value, onChange, readOnly = false }: Copywrite
             <CardTitle className="text-base">5-Point Description</CardTitle>
             {!readOnly && (
               <Button variant="outline" size="sm" onClick={handleAddBullet}>
-                <Plus className="mr-1 h-4 w-4" />
+                <Plus className="mr-1 size-4" />
                 Add
               </Button>
             )}
@@ -130,7 +130,7 @@ export function CopywriterPanel({ value, onChange, readOnly = false }: Copywrite
                   onClick={() => handleRemoveBullet(idx)}
                   className="shrink-0"
                 >
-                  <X className="h-4 w-4" />
+                  <X className="size-4" />
                 </Button>
               )}
             </div>

@@ -246,7 +246,7 @@ export default function ResultPage() {
           <div className="flex items-center gap-3">
             <Link href="/dashboard">
               <Button variant="ghost" size="icon">
-                <ArrowLeft className="h-4 w-4" />
+                <ArrowLeft className="size-4" />
               </Button>
             </Link>
             <div>
@@ -304,7 +304,7 @@ export default function ResultPage() {
             <div className="flex items-center justify-between">
               <h2 className="text-xl font-semibold">生成的图片</h2>
               <Button variant="outline" size="sm" onClick={() => handleRegenerateImage('main')}>
-                <RefreshCw className="mr-2 h-4 w-4" />
+                <RefreshCw className="mr-2 size-4" />
                 全部重新生成
               </Button>
             </div>
@@ -313,7 +313,7 @@ export default function ResultPage() {
             {project.images.filter(img => img.type !== 'original').length === 0 && (
               <div className="rounded-lg bg-yellow-50 border border-yellow-200 p-4">
                 <div className="flex items-start gap-3">
-                  <AlertCircle className="h-5 w-5 text-yellow-600 mt-0.5" />
+                  <AlertCircle className="size-5 text-yellow-600 mt-0.5" />
                   <div className="flex-1">
                     <h3 className="font-semibold text-yellow-900 mb-1">图片生成失败</h3>
                     <p className="text-sm text-yellow-800 mb-3">
@@ -326,7 +326,7 @@ export default function ResultPage() {
                         onClick={() => handleRegenerateImage('main')}
                         className="bg-white"
                       >
-                        <RefreshCw className="mr-2 h-4 w-4" />
+                        <RefreshCw className="mr-2 size-4" />
                         重新生成图片
                       </Button>
                       <Button
@@ -353,7 +353,7 @@ export default function ResultPage() {
             <div className="flex items-center justify-between">
               <h2 className="text-xl font-semibold">商品文案</h2>
               <Button variant="outline" size="sm" onClick={handleRegenerateCopy}>
-                <RefreshCw className="mr-2 h-4 w-4" />
+                <RefreshCw className="mr-2 size-4" />
                 重新生成文案
               </Button>
             </div>
@@ -377,7 +377,7 @@ export default function ResultPage() {
       {/* Processing State Content */}
       {isProcessing && (
         <div className="rounded-2xl border-2 border-dashed p-12 text-center">
-          <Loader2 className="mx-auto mb-4 h-16 w-16 animate-spin text-primary" />
+          <Loader2 className="mx-auto mb-4 size-16 animate-spin text-primary" />
           <h3 className="mb-2 text-xl font-semibold">AI 正在处理您的项目</h3>
           <p className="text-muted-foreground">
             我们正在分析您的图片、生成文案并创建 5 张专业图片
