@@ -32,7 +32,9 @@
       "Read(//private/tmp/**)",
       "Bash(pkill:*)",
       "Bash(psql:*)",
-      "Bash(docker ps:*)"
+      "Bash(docker ps:*)",
+      "Read(//dev/fd/**)",
+      "Bash(pnpm run build:*)"
     ],
     "deny": [],
     "ask": []

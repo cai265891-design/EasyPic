@@ -119,7 +119,15 @@ const worker = new Worker<ImageGenerationJob>(
         `[图片生成] 成功上传 ${uploadedImages.length}/${generatedImages.length} 张图片`
       );
 
-      // 6. 更新工作流状态为完成
+      // 6. 更新 ImageSet 状态为完成
+      await prisma.imageSet.update({
+        where: { id: imageSet.id },
+        data: {
+          status: uploadedImages.length === generatedImages.length ? "completed" : "partial",
+        },
+      });
+
+      // 7. 更新工作流状态为完成
       job.updateProgress(95);
       await prisma.workflowExecution.update({
         where: { id: workflowId },

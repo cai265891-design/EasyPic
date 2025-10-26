@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
     const supabase = createClient();
 
     const { error: verifyError } = await supabase.auth.verifyOtp({
-      type,
+      type: type as any,
       token_hash,
     });
 

@@ -64,7 +64,7 @@ export default function ResultPage() {
           bulletPoints: workflow.listing.bulletPoints,
           description: workflow.listing.description,
           language: 'en',
-        } : null,
+        } : undefined,
         analysis: workflow.product ? {
           category: workflow.input?.category || 'general',
           keywords: workflow.product.keywords,
