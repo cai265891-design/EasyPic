@@ -53,21 +53,24 @@ export async function analyzeProductImage(
           content: [
             {
               type: "text",
-              text: `你是专业的电商产品分析师。请仔细观察图片中的**实物商品本身**，忽略图片上的文字、背景装饰等营销元素。
+              text: `You are a professional e-commerce visual recognition analyst.
 
-请识别并描述商品的主体信息，包括：
-- **商品类型**: 这是什么产品？(例如：玩具车、文具、电子产品等)
-- **材质颜色**: 商品的主要材质和颜色
-- **关键特征**: 商品的核心功能和设计特点
-- **使用场景**: 适合在什么场合使用
-- **目标用户**: 主要面向哪类人群
+Carefully observe the physical product itself in the image, and—based on your understanding of its appearance—sensibly reference functional cue elements shown in the image (e.g., lights, buttons, musical notes, motion/speed lines, text labels). If these cues imply functionality or usage, make reasonable inferences.
 
-重要提示：
-1. 专注于识别图片中的**实际物品**，不要被文字描述误导
-2. 如果看到玩具车就说玩具车，看到文具就说文具，实事求是
-3. 用简洁专业的中文输出，不超过 200 字
+Please output the following fields:
+{
+“Product Type”: “Clearly state what kind of product this is (e.g., toy car, drone, headphones, pet toy, etc.)”,
+“Materials & Colors”: “Describe the primary materials (e.g., plastic, metal) and the main color palette”,
+“Functional Cues”: “Functions that can be inferred from the image or visual elements, such as lighting, sound, rechargeable battery, movable parts, etc.”,
+“Interactive Features”: “If possible, infer likely interactivity or play modes, such as follow mode, drifting, obstacle avoidance, pet interaction, etc.”,
+“Use Scenarios”: “Based on the appearance, infer suitable scenarios (e.g., children’s play, pet entertainment, home leisure, etc.)”,
+“Target Audience”: “Infer the primary target users (e.g., children, pet owners, household users, etc.)”
+}
 
-请开始分析：`,
+Important notes:
+1. You may reference functional text or icons in the image (e.g., “lighting effects,” “Speed Way,” musical notes), but do not quote the ad copy verbatim.
+2. The output must be based on the image itself and reasonable inference; do not fabricate.
+3. Use concise, professional Chinese, with no more than 200 Chinese characters.`,
             },
             {
               type: "image_url",
@@ -112,6 +115,9 @@ export async function generateListing(params: {
   imageBuffer: Buffer;
   category?: string;
   brand?: string;
+  productName?: string;
+  features?: string;
+  specifications?: string;
   targetMarket?: string;
   tone?: string;
   emphasize?: string[];
@@ -121,52 +127,68 @@ export async function generateListing(params: {
     productDescription,
     category = "General",
     brand = "[品牌名]",
+    productName,
+    features,
+    specifications,
     targetMarket = "US",
     tone = "professional",
     emphasize = [],
     userFeedback,
   } = params;
 
-  const systemPrompt = `你是亚马逊金牌卖家的 listing 优化专家。
+  const systemPrompt = `You are an Amazon top-rated seller’s listing optimization expert.
 
-任务：基于商品描述，创建专业的亚马逊 listing 内容，**必须**包含5个图片生成提示词(image_prompts)。
+Task: Based on the input below, generate professional Amazon Listing content (title + description + bullet_points + keywords + image_prompts).
 
+Input:
 目标市场：${targetMarket}
 商品类别：${category}
 品牌：${brand}
+${productName ? `商品名称：${productName}` : ""}
+${features ? `核心特点：${features}` : ""}
+${specifications ? `商品规格：${specifications}` : ""}
 语气：${tone}
 ${emphasize.length > 0 ? `重点强调：${emphasize.join(", ")}` : ""}
 ${userFeedback ? `用户反馈：${userFeedback}` : ""}
 
-**重要**:必须严格按以下JSON格式输出,包含所有字段:
+## Task Requirements
 
+1. Perform function & experience inference before generating:
+- If keywords such as “lights,” “sound effects,” “sensor,” or “remote control” are detected → infer interactive or smart experiences.
+- If the category is “toy car,” “RC Car,” or “Smart Car” → extend to driving, drifting, chasing, obstacle avoidance, etc.
+- If features mention “pets,” “family,” or “children” → extend to companionship, entertainment, and parent-child interaction scenarios.
+- If specs include “battery” or “USB charging” → derive “rechargeable,” “eco-friendly,” and “portable” selling points.
+- If there are design highlights (e.g., rounded form, LEDs, cute style) → emphasize visual appeal and a sense of safety.
+2. Language & Style:
+- Use idiomatic American English.
+- The tone should be evocative and vivid.
+- Help buyers imagine real usage scenarios.
+- Avoid parameter dumping; tell a story.
+3. Structure & Format: You must output the following JSON structure exactly (all fields required; do not add explanatory text):
 {
-  "title": "150-200 字符的商品标题，包含品牌+核心关键词+主要特征",
-  "description": "250-350 字的详细描述，分 3-4 段说明产品价值、功能、使用方法、品质承诺",
-  "bullet_points": [
-    "【卖点 1 标题】详细说明 30-50 字，突出核心功能",
-    "【卖点 2 标题】详细说明 30-50 字，强调材质质量",
-    "【卖点 3 标题】详细说明 30-50 字，描述使用场景",
-    "【卖点 4 标题】详细说明 30-50 字，展示独特优势",
-    "【卖点 5 标题】详细说明 30-50 字，承诺售后服务"
-  ],
-  "keywords": ["关键词1", "关键词2", "关键词3", "关键词4", "关键词5"],
-  "image_prompts": [
-    "Professional product photography demonstrating [卖点1的核心功能]. Scene description: [根据卖点1内容设计具体场景，例如'car in follow mode tracking a moving object with motion trails' 或 'product shown at 45-degree angle highlighting main feature']. CRITICAL: Product must match reference image exactly (same colors, shape, design). White studio background, professional lighting, 4K resolution",
-    "Professional product photography demonstrating [卖点2的核心功能]. Scene description: [根据卖点2内容设计具体场景，例如'car performing 360-degree drift with dynamic angle' 或 'side view showing material quality']. CRITICAL: Product must match reference image exactly (same colors, shape, design). White studio background, professional lighting, 4K resolution",
-    "Professional product photography demonstrating [卖点3的核心功能]. Scene description: [根据卖点3内容设计具体场景，例如'car playing with a cat in lifestyle setting' 或 'top-down view showing usage scenario']. CRITICAL: Product must match reference image exactly (same colors, shape, design). Clean background appropriate for the scene, professional lighting, 4K resolution",
-    "Professional product photography highlighting [卖点4的核心特征]. Scene description: [根据卖点4内容设计具体场景，例如'close-up of LED lights glowing with cute round design visible' 或 'detail shot of key feature']. CRITICAL: Product must match reference image exactly (same colors, shape, design). White studio background, dramatic lighting on features, 4K resolution",
-    "Professional product photography highlighting [卖点5的核心功能]. Scene description: [根据卖点5内容设计具体场景，例如'product with USB charging cable showing rechargeable feature' 或 'full product view showing scale and completeness']. CRITICAL: Product must match reference image exactly (same colors, shape, design). White studio background, clean composition, 4K resolution"
-  ]
+“title”: “An Amazon title of 150–200 characters including the brand name (${brand}), core keywords, and main feature set.”,
+“description”: “A detailed description of 250–350 characters. Split into 3–4 paragraphs covering emotional experience, key features, usage scenarios, and quality assurance. Smooth, rhythmic language.”,
+“bullet_points”: [
+“[Selling Point 1 Title] 30–50 words explaining the value, e.g., 3 Smart Interactive Modes - Drive, Follow, and Escape!”,
+“[Selling Point 2 Title] 30–50 words highlighting materials or performance, e.g., Durable 4WD Design for Smooth 360° Drift Performance”,
+“[Selling Point 3 Title] 30–50 words tied to scenarios, e.g., Fun for Kids and Pets - Perfect for Indoor Play”,
+“[Selling Point 4 Title] 30–50 words on design or emotional highlights, e.g., Cute Round Look with LED Lights & Sound Effects”,
+“[Selling Point 5 Title] 30–50 words on after-sales or added value, e.g., Rechargeable Battery with USB Cable Included”
+],
+“keywords”: [“keyword 1”, “keyword 2”, “keyword 3”, “keyword 4”, “keyword 5”],
+“image_prompts”: [
+“Based on the reference image, keep the same product. Professional product photography demonstrating [core feature of Selling Point 1]. Scene description: e.g., ‘car following a moving object in follow mode with motion trails’. White studio background, professional lighting, 4K resolution.”,
+“Based on the reference image, keep the same product. Professional product photography demonstrating [core feature of Selling Point 2]. Scene description: e.g., ‘car performing a 360-degree drift on smooth surface’. White studio background, professional lighting, 4K resolution.”,
+“Based on the reference image, keep the same product. Professional product photography demonstrating [core feature of Selling Point 3]. Scene description: e.g., ‘car playing with a cat or child in living room scene’. Clean background, natural lighting, 4K resolution.”,
+“Based on the reference image, keep the same product. Professional product photography highlighting [core feature of Selling Point 4]. Scene description: e.g., ‘close-up of LED headlights glowing with cute design visible’. White studio background, dramatic lighting, 4K resolution.”,
+“Based on the reference image, keep the same product. Professional product photography showing [core feature of Selling Point 5]. Scene description: e.g., ‘USB charging setup with cable connected, ready to play’. White studio background, clean composition, 4K resolution.”
+]
 }
-
-关键要求：
-1. **必须输出所有字段**,包括image_prompts
-2. image_prompts必须是5个元素的数组
-3. 每个image_prompt必须以"Based on the reference image, keep the same product"开头
-4. 使用地道美式英语
-5. 符合亚马逊内容政策
-6. 严格按JSON格式输出,不要有其他说明文字`;
+## Additional Instructions
+- Output JSON only; do not add explanatory text.
+- All content must be original.
+- The model should automatically infer reasonable attributes not explicitly stated (e.g., suitable age range, interaction modes).
+- Keep all fields complete (including five items each for keywords and image_prompts).`;
 
   const response = await fetch("https://shuchong.xyz/v1/chat/completions", {
     method: "POST",

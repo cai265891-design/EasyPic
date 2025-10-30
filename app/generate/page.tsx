@@ -24,7 +24,8 @@ export default function GeneratePage() {
   const [loading, setLoading] = useState(false);
 
   // Form state
-  const [projectName, setProjectName] = useState('');
+  const [brand, setBrand] = useState('');
+  const [productName, setProductName] = useState('');
   const [keyFeatures, setKeyFeatures] = useState('');
   const [specs, setSpecs] = useState('');
   const [category, setCategory] = useState('');
@@ -61,7 +62,10 @@ export default function GeneratePage() {
         body: JSON.stringify({
           imageUrl,
           category,
-          brand: projectName,
+          brand,
+          productName,
+          features: keyFeatures,
+          specifications: specs,
         }),
       });
 
@@ -111,12 +115,22 @@ export default function GeneratePage() {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
+            <Label htmlFor="brand">品牌</Label>
+            <Input
+              id="brand"
+              placeholder="例如：Yeti"
+              value={brand}
+              onChange={(e) => setBrand(e.target.value)}
+            />
+          </div>
+
+          <div className="space-y-2">
             <Label htmlFor="name">商品名称</Label>
             <Input
               id="name"
               placeholder="例如：不锈钢保温杯"
-              value={projectName}
-              onChange={(e) => setProjectName(e.target.value)}
+              value={productName}
+              onChange={(e) => setProductName(e.target.value)}
             />
           </div>
 

@@ -20,7 +20,9 @@
     "docker:dev": "docker-compose -f docker-compose.dev.yml up -d",
     "docker:down": "docker-compose -f docker-compose.dev.yml down",
     "create-user": "DATABASE_URL='postgresql://postgres:postgres@localhost:5432/saas_db?schema=public' tsx scripts/create-test-user.ts",
-    "login-link": "DATABASE_URL='postgresql://postgres:postgres@localhost:5432/saas_db?schema=public' tsx scripts/get-login-link.ts"
+    "login-link": "DATABASE_URL='postgresql://postgres:postgres@localhost:5432/saas_db?schema=public' tsx scripts/get-login-link.ts",
+    "test:r2": "tsx scripts/test-r2-connection.ts",
+    "test:workflow": "tsx scripts/test-workflow-with-r2.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.67.0",

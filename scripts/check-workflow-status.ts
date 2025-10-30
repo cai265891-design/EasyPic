@@ -1,4 +1,9 @@
+import { config } from 'dotenv';
+import { resolve } from 'path';
 import { prisma } from '../lib/db';
+
+// 加载环境变量
+config({ path: resolve(process.cwd(), '.env.local') });
 
 async function checkWorkflowStatus() {
   console.log('使用数据库:', process.env.DATABASE_URL || '未设置');

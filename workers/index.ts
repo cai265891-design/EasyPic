@@ -5,7 +5,8 @@
 
 // 加载环境变量 (必须在所有其他导入之前)
 import { config } from "dotenv";
-config({ path: ".env.local" });
+import { resolve } from "path";
+config({ path: resolve(process.cwd(), ".env.local") });
 
 import "./image-recognition.worker";
 import "./listing-generation.worker";

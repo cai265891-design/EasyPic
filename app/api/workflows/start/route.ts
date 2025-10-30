@@ -8,6 +8,9 @@ const startWorkflowSchema = z.object({
   imageUrl: z.string().url("请提供有效的图片 URL"),
   category: z.string().optional(),
   brand: z.string().optional(),
+  productName: z.string().optional(),
+  features: z.string().optional(),
+  specifications: z.string().optional(),
 });
 
 export async function POST(req: NextRequest) {
@@ -39,7 +42,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { imageUrl, category, brand } = validation.data;
+    const { imageUrl, category, brand, productName, features, specifications } = validation.data;
 
     // 3. 创建工作流执行记录
     const workflow = await prisma.workflowExecution.create({
@@ -48,6 +51,9 @@ export async function POST(req: NextRequest) {
         imageUrl,
         category,
         brand,
+        productName,
+        features,
+        specifications,
         status: "PENDING",
         metadata: {
           startedAt: new Date().toISOString(),

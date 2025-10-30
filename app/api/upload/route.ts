@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { writeFile, mkdir } from "fs/promises";
-import { join } from "path";
 import { auth } from "@/auth";
+import { uploadProductImage } from "@/lib/services/storage";
 
 export async function POST(req: NextRequest) {
   try {
@@ -47,29 +46,28 @@ export async function POST(req: NextRequest) {
     // 生成唯一文件名
     const timestamp = Date.now();
     const randomString = Math.random().toString(36).substring(7);
-    const ext = file.name.split(".").pop();
-    const filename = `${userId}_${timestamp}_${randomString}.${ext}`;
+    const filename = `${userId}_${timestamp}_${randomString}`;
 
-    // 保存到 public/uploads 目录
-    const uploadDir = join(process.cwd(), "public", "uploads");
-    await mkdir(uploadDir, { recursive: true });
-
-    const filepath = join(uploadDir, filename);
+    // 读取文件内容
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
 
-    await writeFile(filepath, buffer);
+    // 上传到 R2
+    const uploadPath = `uploads/${userId}/${filename}`;
+    const uploadResult = await uploadProductImage(buffer, uploadPath, {
+      generateThumbnail: false, // 用户上传的原图不需要缩略图
+      resize: { width: 2000, height: 2000 },
+    });
 
-    // 返回可访问的 URL
-    const imageUrl = `${process.env.NEXT_PUBLIC_APP_URL}/uploads/${filename}`;
-
-    console.log(`[上传] 用户 ${userId} 上传文件: ${filename}, 大小: ${file.size} bytes`);
+    console.log(`[上传] 用户 ${userId} 上传文件到 R2: ${uploadPath}, 大小: ${file.size} bytes`);
+    console.log(`[上传] R2 公网 URL: ${uploadResult.imageUrl}`);
 
     return NextResponse.json({
       success: true,
-      imageUrl,
-      filename,
-      size: file.size,
+      imageUrl: uploadResult.imageUrl, // R2 公网 URL
+      thumbnailUrl: uploadResult.thumbnailUrl,
+      filename: `${filename}.jpg`,
+      size: uploadResult.size,
     });
   } catch (error: any) {
     console.error("[上传] 失败:", error);

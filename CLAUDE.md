@@ -35,11 +35,19 @@ npx prisma studio    # Open Prisma Studio GUI
 # Email development
 pnpm email           # Start React Email dev server on port 3333
 
+# Development utilities
+pnpm create-user     # Create test user in local database
+pnpm login-link      # Generate login link for test user
+
 # Workflow System (New!)
 pnpm docker:dev      # Start Redis & PostgreSQL in Docker
 pnpm workers         # Start BullMQ workers (development mode with watch)
 pnpm workers:prod    # Start BullMQ workers (production mode)
 pnpm docker:down     # Stop Docker services
+
+# Testing
+pnpm test:r2         # Test Cloudflare R2 connection and upload
+pnpm test:workflow   # Test complete workflow with R2 integration
 ```
 
 ## Architecture
@@ -193,11 +201,21 @@ Required vars (add to `.env.local`):
 ```
 REDIS_URL=redis://localhost:6379
 ANTHROPIC_API_KEY=sk-ant-xxx
-CLOUDFLARE_R2_ACCESS_KEY=xxx
-CLOUDFLARE_R2_SECRET_KEY=xxx
-CLOUDFLARE_R2_BUCKET=amazon-images
-CLOUDFLARE_R2_PUBLIC_URL=https://pub-xxx.r2.dev
+
+# Cloudflare R2 配置 (从 R2 控制台 > 管理 R2 API 令牌 获取)
+CLOUDFLARE_R2_ACCESS_KEY=xxx           # Access Key ID
+CLOUDFLARE_R2_SECRET_KEY=xxx           # Secret Access Key
+CLOUDFLARE_R2_ENDPOINT=https://<account_id>.r2.cloudflarestorage.com  # S3 API Endpoint
+CLOUDFLARE_R2_BUCKET=amazon-images     # 存储桶名称
+CLOUDFLARE_R2_PUBLIC_URL=https://pub-xxx.r2.dev  # 公开访问 URL (在存储桶设置中启用)
 ```
+
+**获取 Cloudflare R2 配置**:
+1. 登录 Cloudflare → 进入 R2
+2. 创建存储桶,记录存储桶名称
+3. 点击"管理 R2 API 令牌" → 创建 API 令牌
+4. 复制 Access Key ID、Secret Access Key 和 Endpoint
+5. 在存储桶设置中启用"公开访问",复制公开 URL
 
 ### Development Setup
 

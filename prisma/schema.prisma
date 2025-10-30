@@ -110,9 +110,12 @@ model WorkflowExecution {
   currentStep  WorkflowStep?
 
   // 输入数据
-  imageUrl  String
-  category  String?
-  brand     String?
+  imageUrl        String
+  category        String?
+  brand           String?
+  productName     String?
+  features        String?  @db.Text
+  specifications  String?  @db.Text
 
   // 输出数据
   productId String?   @unique

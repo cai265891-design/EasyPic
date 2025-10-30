@@ -79,27 +79,53 @@ const worker = new Worker<ImageGenerationJob>(
       const finalReferenceUrl = isLocalUrl ? undefined : referenceImageUrl;
 
       // 如果有 AI 生成的 prompts,直接使用;否则回退到默认生成方式
-      const generatedImages = imagePrompts.length > 0
-        ? await Promise.all(
-            imagePrompts.map((prompt) =>
-              claudeCircuitBreaker.call(() =>
-                generateProductImage(prompt, finalReferenceUrl) // 使用公网 URL
-              )
+      let generatedImages: Array<{ imageUrl: string; prompt: string }> = [];
+
+      if (imagePrompts.length > 0) {
+        // 使用 Promise.allSettled 允许部分失败
+        const results = await Promise.allSettled(
+          imagePrompts.map((prompt) =>
+            claudeCircuitBreaker.call(() =>
+              generateProductImage(prompt, finalReferenceUrl)
             )
           )
-        : await claudeCircuitBreaker.call(() =>
-            generateProductImages({
-              productDescription: workflow.product!.description,
-              bulletPoints,
-              brand: brand || workflow.brand || undefined,
-              style: "professional Amazon product photography",
-              referenceImageUrl: finalReferenceUrl, // 使用公网 URL
-            })
-          );
+        );
 
-      console.log(
-        `[图片生成] AI 生成完成，共 ${generatedImages.length} 张图片`
-      );
+        // 筛选出成功的结果
+        generatedImages = results
+          .map((result, index) => {
+            if (result.status === 'fulfilled') {
+              return result.value;
+            } else {
+              console.error(`[图片生成] 图片 ${index + 1} 生成失败:`, result.reason?.message || result.reason);
+              return null;
+            }
+          })
+          .filter((img): img is { imageUrl: string; prompt: string } => img !== null);
+
+        console.log(
+          `[图片生成] AI 生成完成，成功 ${generatedImages.length}/${imagePrompts.length} 张图片`
+        );
+
+        // 如果所有图片都失败,抛出错误
+        if (generatedImages.length === 0) {
+          throw new Error('所有图片生成失败');
+        }
+      } else {
+        generatedImages = await claudeCircuitBreaker.call(() =>
+          generateProductImages({
+            productDescription: workflow.product!.description,
+            bulletPoints,
+            brand: brand || workflow.brand || undefined,
+            style: "professional Amazon product photography",
+            referenceImageUrl: finalReferenceUrl,
+          })
+        );
+
+        console.log(
+          `[图片生成] AI 生成完成，共 ${generatedImages.length} 张图片`
+        );
+      }
 
       // 4. 创建 ImageSet 记录
       job.updateProgress(40);
