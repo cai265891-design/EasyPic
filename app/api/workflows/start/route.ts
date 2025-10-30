@@ -85,12 +85,20 @@ export async function POST(req: NextRequest) {
   } catch (error: any) {
     console.error("[API] 启动工作流失败:", error);
 
-    return NextResponse.json(
-      {
-        error: "启动工作流失败",
-        message: error.message || "未知错误",
-      },
-      { status: 500 }
-    );
+    // 详细错误信息,帮助调试
+    const errorDetails: any = {
+      error: "启动工作流失败",
+      message: error.message || "未知错误",
+      type: error.constructor.name,
+    };
+
+    // 在开发/预览环境显示更多调试信息
+    if (process.env.VERCEL_ENV !== 'production') {
+      errorDetails.stack = error.stack;
+      errorDetails.code = error.code;
+      errorDetails.cause = error.cause;
+    }
+
+    return NextResponse.json(errorDetails, { status: 500 });
   }
 }
