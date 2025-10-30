@@ -5,6 +5,10 @@ import { imageRecognitionQueue } from "@/lib/queues";
 import { z } from "zod";
 import { apiLogger as logger } from "@/lib/logger";
 
+// 强制动态渲染,禁用静态生成
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
+
 const startWorkflowSchema = z.object({
   imageUrl: z.string().url("请提供有效的图片 URL"),
   category: z.string().optional(),

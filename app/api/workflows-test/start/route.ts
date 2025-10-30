@@ -3,6 +3,9 @@ import { prisma } from "@/lib/db";
 import { imageRecognitionQueue } from "@/lib/queues";
 import { z } from "zod";
 
+// 强制动态渲染
+export const dynamic = 'force-dynamic';
+
 const startWorkflowSchema = z.object({
   imageUrl: z.string().url("请提供有效的图片 URL"),
   category: z.string().optional(),

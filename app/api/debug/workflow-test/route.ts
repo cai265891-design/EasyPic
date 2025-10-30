@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 
+// 强制动态渲染
+export const dynamic = 'force-dynamic';
+
 /**
  * 调试接口 - 测试工作流各个组件
  * GET /api/debug/workflow-test

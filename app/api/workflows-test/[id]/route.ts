@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 
+// 强制动态渲染
+export const dynamic = 'force-dynamic';
+
 /**
  * 测试用 API - 无需登录
  * GET /api/workflows-test/:id
