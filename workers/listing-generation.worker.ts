@@ -3,7 +3,8 @@ import { connection } from "../lib/queues/config";
 import { prisma } from "../lib/db";
 import { generateListing, claudeCircuitBreaker } from "../lib/services/claude";
 import { downloadImage } from "../lib/services/storage";
-import { imageGenerationQueue } from "../lib/queues";
+import { getImageGenerationQueue } from "../lib/queues";
+import { listingGenerationLogger as logger } from "../lib/logger";
 
 interface ListingGenerationJob {
   workflowId: string;
@@ -24,31 +25,53 @@ const worker = new Worker<ListingGenerationJob>(
       job.data;
     const startTime = Date.now();
 
-    console.log(`[文案生成] 开始处理工作流 ${workflowId}`);
+    logger.workflowStart(workflowId, { productId, version, jobId: job.id });
 
     try {
       // 1. 获取商品和工作流数据
+      logger.stepStart('查询工作流数据', workflowId);
       const workflow = await prisma.workflowExecution.findUnique({
         where: { id: workflowId },
         include: { product: true },
       });
 
       if (!workflow || !workflow.product) {
+        logger.stepError('查询工作流数据', workflowId, new Error('数据不存在'));
         throw new Error("找不到工作流或商品数据");
       }
+      logger.stepComplete('查询工作流数据', workflowId, 0, {
+        hasProduct: !!workflow.product,
+        category: workflow.category,
+        brand: workflow.brand
+      });
 
       // 2. 更新状态
       await prisma.workflowExecution.update({
         where: { id: workflowId },
         data: { currentStep: "LISTING_GENERATION" },
       });
+      logger.dbQuery('更新当前步骤为 LISTING_GENERATION', workflowId);
 
       // 3. 下载图片
       job.updateProgress(20);
+      logger.stepStart('下载产品图片', workflowId);
+      const downloadStart = Date.now();
       const imageBuffer = await downloadImage(workflow.product.imageUrl);
+      logger.stepComplete('下载产品图片', workflowId, Date.now() - downloadStart, {
+        size: imageBuffer.length,
+        sizeKB: (imageBuffer.length / 1024).toFixed(2)
+      });
 
       // 4. 调用 Claude API 生成文案
       job.updateProgress(40);
+      logger.stepStart('调用 Claude API 生成文案', workflowId);
+      logger.apiCall('Claude Listing Generation', workflowId, {
+        productDescLength: workflow.product!.description.length,
+        hasAdjustments: !!adjustments,
+        hasFeedback: !!userFeedback
+      });
+
+      const apiStart = Date.now();
       const listing = await claudeCircuitBreaker.call(() =>
         generateListing({
           productDescription: workflow.product!.description,
@@ -64,19 +87,31 @@ const worker = new Worker<ListingGenerationJob>(
           userFeedback,
         })
       );
+      const apiDuration = Date.now() - apiStart;
 
-      console.log(`[文案生成] AI 生成完成，标题: ${listing.title.substring(0, 50)}...`);
+      logger.apiResponse('Claude Listing Generation', workflowId, apiDuration, {
+        titleLength: listing.title.length,
+        bulletPointsCount: listing.bullet_points.length,
+        keywordsCount: listing.keywords.length,
+        hasImagePrompts: !!(listing.image_prompts && listing.image_prompts.length > 0)
+      });
+      logger.stepComplete('AI 文案生成', workflowId, apiDuration, {
+        title: listing.title.substring(0, 50) + '...'
+      });
 
       // 5. 质量检查
       job.updateProgress(70);
+      logger.stepStart('质量评分', workflowId);
       const qualityScore = calculateQualityScore(listing);
       const approved = qualityScore >= 80;
-
-      console.log(
-        `[文案生成] 质量评分: ${qualityScore}/100, ${approved ? "自动通过" : "需要审核"}`
-      );
+      logger.stepComplete('质量评分', workflowId, 0, {
+        score: qualityScore,
+        approved,
+        status: approved ? '自动通过' : '需要审核'
+      });
 
       // 6. 保存 Listing (包含图片提示词)
+      logger.stepStart('保存 Listing 到数据库', workflowId);
       const savedListing = await prisma.listing.create({
         data: {
           productId,
@@ -91,8 +126,14 @@ const worker = new Worker<ListingGenerationJob>(
           version,
         },
       });
+      logger.dbQuery('创建 Listing 记录', workflowId, { listingId: savedListing.id });
+      logger.stepComplete('保存 Listing', workflowId, 0, {
+        listingId: savedListing.id,
+        imagePromptsCount: (listing.image_prompts || []).length
+      });
 
       // 7. 更新工作流
+      logger.stepStart('更新工作流元数据', workflowId);
       await prisma.workflowExecution.update({
         where: { id: workflowId },
         data: {
@@ -108,19 +149,28 @@ const worker = new Worker<ListingGenerationJob>(
           },
         },
       });
+      logger.dbQuery('更新工作流元数据', workflowId);
 
       // 8. 触发下一步：图片生成
       job.updateProgress(90);
-      await imageGenerationQueue.add("generate-batch", {
+      logger.stepStart('触发图片生成队列', workflowId);
+      const nextJob = await getImageGenerationQueue().add("generate-batch", {
         workflowId,
         listingId: savedListing.id,
         bulletPoints: listing.bullet_points,
         imageUrl: workflow.product.imageUrl,
       });
+      logger.queueEvent('添加图片生成任务', workflowId, nextJob.id, {
+        listingId: savedListing.id,
+        bulletPointsCount: listing.bullet_points.length
+      });
 
-      console.log(
-        `[文案生成] 工作流 ${workflowId} 完成，用时 ${Date.now() - startTime}ms`
-      );
+      const totalTime = Date.now() - startTime;
+      logger.workflowComplete(workflowId, totalTime, {
+        listingId: savedListing.id,
+        qualityScore,
+        approved
+      });
 
       job.updateProgress(100);
       return {
@@ -128,24 +178,32 @@ const worker = new Worker<ListingGenerationJob>(
         listingId: savedListing.id,
         qualityScore,
         approved,
-        processingTime: Date.now() - startTime,
+        processingTime: totalTime,
       };
     } catch (error: any) {
-      console.error(`[文案生成] 工作流 ${workflowId} 失败:`, error);
-
-      await prisma.workflowExecution.update({
-        where: { id: workflowId },
-        data: {
-          status: "FAILED",
-          error: error.message || String(error),
-        },
+      logger.workflowError(workflowId, error, {
+        processingTime: Date.now() - startTime,
+        productId
       });
+
+      try {
+        await prisma.workflowExecution.update({
+          where: { id: workflowId },
+          data: {
+            status: "FAILED",
+            error: error.message || String(error),
+          },
+        });
+        logger.dbQuery('更新工作流状态为 FAILED', workflowId);
+      } catch (dbError: any) {
+        logger.error('更新失败状态时数据库错误', { workflowId, error: dbError });
+      }
 
       throw error;
     }
   },
   {
-    connection,
+    connection: connection(),
     concurrency: 3,
   }
 );
@@ -217,13 +275,20 @@ function calculateQualityScore(listing: {
 }
 
 worker.on("completed", (job) => {
-  console.log(`✅ [文案生成] 任务 ${job.id} 完成`);
+  logger.queueEvent('任务完成', job.data.workflowId, job.id, {
+    returnValue: job.returnvalue
+  });
 });
 
 worker.on("failed", (job, err) => {
-  console.error(`❌ [文案生成] 任务 ${job?.id} 失败:`, err.message);
+  logger.queueEvent('任务失败', job?.data?.workflowId || 'unknown', job?.id, {
+    error: err.message,
+    stack: err.stack
+  });
 });
 
-console.log("🚀 文案生成 Worker 已启动");
+logger.success('🚀 文案生成 Worker 已启动', {
+  data: { concurrency: 3, queueName: 'listing-generation' }
+});
 
 export default worker;

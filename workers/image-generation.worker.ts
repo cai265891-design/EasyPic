@@ -1,6 +1,7 @@
 import { Worker } from "bullmq";
 import { connection } from "../lib/queues/config";
 import { prisma } from "../lib/db";
+import { imageGenerationLogger as logger } from "../lib/logger";
 import {
   generateProductImages,
   generateProductImage, // 单张图片生成函数
@@ -275,7 +276,7 @@ const worker = new Worker<ImageGenerationJob>(
     }
   },
   {
-    connection,
+    connection: connection(),
     concurrency: 2, // 同时处理 2 个任务（图片生成较耗时）
   }
 );

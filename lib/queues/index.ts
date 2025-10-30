@@ -16,47 +16,86 @@ const defaultJobOptions = {
   },
 };
 
+let _imageRecognitionQueue: Queue | null = null;
+let _listingGenerationQueue: Queue | null = null;
+let _imageGenerationQueue: Queue | null = null;
+let _imageSingleGenerationQueue: Queue | null = null;
+
 // 图片识别队列
-export const imageRecognitionQueue = new Queue("image-recognition", {
-  connection,
-  defaultJobOptions: {
-    ...defaultJobOptions,
-  },
-});
+export function getImageRecognitionQueue(): Queue {
+  if (!_imageRecognitionQueue) {
+    _imageRecognitionQueue = new Queue("image-recognition", {
+      connection: connection(),
+      defaultJobOptions: {
+        ...defaultJobOptions,
+      },
+    });
+  }
+  return _imageRecognitionQueue;
+}
 
 // 文案生成队列
-export const listingGenerationQueue = new Queue("listing-generation", {
-  connection,
-  defaultJobOptions: {
-    ...defaultJobOptions,
-  },
-});
+export function getListingGenerationQueue(): Queue {
+  if (!_listingGenerationQueue) {
+    _listingGenerationQueue = new Queue("listing-generation", {
+      connection: connection(),
+      defaultJobOptions: {
+        ...defaultJobOptions,
+      },
+    });
+  }
+  return _listingGenerationQueue;
+}
 
 // 图片批量生成队列
-export const imageGenerationQueue = new Queue("image-generation", {
-  connection,
-  defaultJobOptions: {
-    ...defaultJobOptions,
-    attempts: 2, // 图片生成只重试 2 次
-  },
-});
+export function getImageGenerationQueue(): Queue {
+  if (!_imageGenerationQueue) {
+    _imageGenerationQueue = new Queue("image-generation", {
+      connection: connection(),
+      defaultJobOptions: {
+        ...defaultJobOptions,
+        attempts: 2, // 图片生成只重试 2 次
+      },
+    });
+  }
+  return _imageGenerationQueue;
+}
 
 // 单张图片生成队列
-export const imageSingleGenerationQueue = new Queue(
-  "image-single-generation",
-  {
-    connection,
-    defaultJobOptions: {
-      ...defaultJobOptions,
+export function getImageSingleGenerationQueue(): Queue {
+  if (!_imageSingleGenerationQueue) {
+    _imageSingleGenerationQueue = new Queue("image-single-generation", {
+      connection: connection(),
+      defaultJobOptions: {
+        ...defaultJobOptions,
         attempts: 2,
-    },
+      },
+    });
   }
-);
+  return _imageSingleGenerationQueue;
+}
 
-// 导出所有队列（方便监控）
-export const allQueues = [
-  imageRecognitionQueue,
-  listingGenerationQueue,
-  imageGenerationQueue,
-  imageSingleGenerationQueue,
-];
+// 兼容旧的导出方式(getter 模式)
+export const imageRecognitionQueue = {
+  get add() { return getImageRecognitionQueue().add.bind(getImageRecognitionQueue()); },
+  get getJob() { return getImageRecognitionQueue().getJob.bind(getImageRecognitionQueue()); },
+  get getJobs() { return getImageRecognitionQueue().getJobs.bind(getImageRecognitionQueue()); },
+};
+
+export const listingGenerationQueue = {
+  get add() { return getListingGenerationQueue().add.bind(getListingGenerationQueue()); },
+  get getJob() { return getListingGenerationQueue().getJob.bind(getListingGenerationQueue()); },
+  get getJobs() { return getListingGenerationQueue().getJobs.bind(getListingGenerationQueue()); },
+};
+
+export const imageGenerationQueue = {
+  get add() { return getImageGenerationQueue().add.bind(getImageGenerationQueue()); },
+  get getJob() { return getImageGenerationQueue().getJob.bind(getImageGenerationQueue()); },
+  get getJobs() { return getImageGenerationQueue().getJobs.bind(getImageGenerationQueue()); },
+};
+
+export const imageSingleGenerationQueue = {
+  get add() { return getImageSingleGenerationQueue().add.bind(getImageSingleGenerationQueue()); },
+  get getJob() { return getImageSingleGenerationQueue().getJob.bind(getImageSingleGenerationQueue()); },
+  get getJobs() { return getImageSingleGenerationQueue().getJobs.bind(getImageSingleGenerationQueue()); },
+};
