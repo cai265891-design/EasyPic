@@ -16,6 +16,15 @@ export const env = createEnv({
     EMAIL_FROM: z.string().min(1).optional(),
     STRIPE_API_KEY: z.string().min(1).optional(),
     STRIPE_WEBHOOK_SECRET: z.string().min(1).optional(),
+    // Workflow System - Redis & AI
+    REDIS_URL: z.string().optional(),
+    ANTHROPIC_API_KEY: z.string().min(1).optional(),
+    // Workflow System - Cloudflare R2
+    CLOUDFLARE_R2_ACCESS_KEY: z.string().min(1).optional(),
+    CLOUDFLARE_R2_SECRET_KEY: z.string().min(1).optional(),
+    CLOUDFLARE_R2_BUCKET: z.string().min(1).optional(),
+    CLOUDFLARE_R2_ENDPOINT: z.string().url().optional(),
+    CLOUDFLARE_R2_PUBLIC_URL: z.string().url().optional(),
     // Amazon Image Generator - n8n
     N8N_WEBHOOK_ANALYZE: z.string().url().optional(),
     N8N_WEBHOOK_COPYWRITING: z.string().url().optional(),
@@ -53,6 +62,15 @@ export const env = createEnv({
       process.env.NEXT_PUBLIC_STRIPE_BUSINESS_MONTHLY_PLAN_ID,
     NEXT_PUBLIC_STRIPE_BUSINESS_YEARLY_PLAN_ID:
       process.env.NEXT_PUBLIC_STRIPE_BUSINESS_YEARLY_PLAN_ID,
+    // Workflow System - Redis & AI
+    REDIS_URL: process.env.REDIS_URL,
+    ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY,
+    // Workflow System - Cloudflare R2
+    CLOUDFLARE_R2_ACCESS_KEY: process.env.CLOUDFLARE_R2_ACCESS_KEY,
+    CLOUDFLARE_R2_SECRET_KEY: process.env.CLOUDFLARE_R2_SECRET_KEY,
+    CLOUDFLARE_R2_BUCKET: process.env.CLOUDFLARE_R2_BUCKET,
+    CLOUDFLARE_R2_ENDPOINT: process.env.CLOUDFLARE_R2_ENDPOINT,
+    CLOUDFLARE_R2_PUBLIC_URL: process.env.CLOUDFLARE_R2_PUBLIC_URL,
     // Amazon Image Generator
     N8N_WEBHOOK_ANALYZE: process.env.N8N_WEBHOOK_ANALYZE,
     N8N_WEBHOOK_COPYWRITING: process.env.N8N_WEBHOOK_COPYWRITING,

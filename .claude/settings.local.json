@@ -51,7 +51,8 @@
       "Bash(DATABASE_URL='postgresql://postgres:postgres@localhost:5432/saas_starter?schema=public' psql -c \"SELECT \"\"imageUrl\"\" FROM products ORDER BY \"\"createdAt\"\" DESC LIMIT 1;\")",
       "Bash(DATABASE_URL='postgresql://postgres:postgres@localhost:5432/saas_starter?schema=public' npx tsx scripts/check-workflow-status.ts cmhd7h90u0001hxn5z0nlbni1)",
       "Bash(DATABASE_URL='postgresql://postgres:postgres@localhost:5432/saas_starter?schema=public' npx tsx scripts/retry-failed-workflow.ts cmhd7h90u0001hxn5z0nlbni1)",
-      "Bash(DATABASE_URL='postgresql://postgres:postgres@localhost:5432/saas_starter?schema=public' npx tsx scripts/retry-listing-generation.ts cmhd7h90u0001hxn5z0nlbni1)"
+      "Bash(DATABASE_URL='postgresql://postgres:postgres@localhost:5432/saas_starter?schema=public' npx tsx scripts/retry-listing-generation.ts cmhd7h90u0001hxn5z0nlbni1)",
+      "Bash(tee:*)"
     ],
     "deny": [],
     "ask": []
