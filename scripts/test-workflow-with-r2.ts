@@ -98,7 +98,8 @@ async function testWorkflowWithR2() {
     if (updatedWorkflow.listing) {
       console.log('✅ 文案生成已完成');
       console.log(`   标题: ${updatedWorkflow.listing.title.substring(0, 60)}...`);
-      console.log(`   卖点数量: ${updatedWorkflow.listing.bulletPoints.length}\n`);
+      const bulletPoints = updatedWorkflow.listing.bulletPoints as string[] | null;
+      console.log(`   卖点数量: ${bulletPoints?.length || 0}\n`);
     }
 
     console.log('=== 测试提交成功 ===');
