@@ -22,16 +22,35 @@ export async function initDatabase(): Promise<void> {
   console.log(`✅ DATABASE_URL 已配置`);
   console.log(`   ${maskedUrl}\n`);
 
-  // 2. 执行 Prisma DB Push
+  // 2. 转换 PgBouncer URL 为 Direct Connection
+  let dbUrl = process.env.DATABASE_URL;
+  let usedDirectConnection = false;
+
+  if (dbUrl.includes('pgbouncer=true') && dbUrl.includes(':6543')) {
+    console.log('⚠️  检测到 PgBouncer 连接 (端口 6543)');
+    console.log('   正在转换为 Direct Connection (端口 5432)...\n');
+
+    // 转换为 Direct Connection
+    dbUrl = dbUrl
+      .replace(':6543', ':5432')  // 修改端口
+      .replace(/[?&]pgbouncer=true/, '');  // 移除 pgbouncer 参数
+
+    usedDirectConnection = true;
+  }
+
+  // 3. 执行 Prisma DB Push
   console.log('📊 正在创建/更新数据库表结构...\n');
 
   try {
-    // 设置 30 秒超时
+    // 设置 60 秒超时 (Direct Connection 可能较慢)
     const output = execSync('npx prisma db push --accept-data-loss --skip-generate', {
       encoding: 'utf-8',
       stdio: 'pipe',  // 捕获所有输出
-      env: process.env,
-      timeout: 30000, // 30 秒超时
+      env: {
+        ...process.env,
+        DATABASE_URL: dbUrl,  // 使用转换后的 URL
+      },
+      timeout: 60000, // 60 秒超时
     });
 
     // 输出 Prisma 的执行结果
@@ -39,7 +58,11 @@ export async function initDatabase(): Promise<void> {
       console.log(output);
     }
 
-    console.log('\n✅ 数据库表结构同步完成\n');
+    if (usedDirectConnection) {
+      console.log('\n✅ 数据库表结构同步完成 (使用 Direct Connection)\n');
+    } else {
+      console.log('\n✅ 数据库表结构同步完成\n');
+    }
   } catch (error: any) {
     console.error('\n❌ 数据库初始化失败!\n');
 
