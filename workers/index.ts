@@ -8,6 +8,9 @@ import { config } from "dotenv";
 import { resolve } from "path";
 config({ path: resolve(process.cwd(), ".env.local") });
 
+// 数据库初始化 (必须在验证环境变量前执行)
+import { initDatabase } from "../lib/utils/init-database";
+
 // 验证和修复环境变量
 import { printDatabaseUrlDiagnostics } from "../lib/utils/database-url";
 
@@ -72,14 +75,30 @@ if (hasError) {
   process.exit(1);
 }
 
-console.log('\n✅ 环境变量检查通过,启动 Worker...\n');
+console.log('\n✅ 环境变量检查通过\n');
 
-// 导入 Worker (触发启动)
-import "./image-recognition.worker";
-import "./listing-generation.worker";
-import "./image-generation.worker";
+// ============================================
+// 异步启动流程 (先初始化数据库,再启动 Worker)
+// ============================================
 
-console.log("🚀 所有 Worker 已启动，等待任务...");
+(async () => {
+  try {
+    // 1. 初始化数据库
+    await initDatabase();
+
+    // 2. 导入并启动 Worker
+    console.log('🚀 启动 Worker...\n');
+    await import("./image-recognition.worker");
+    await import("./listing-generation.worker");
+    await import("./image-generation.worker");
+
+    console.log("✅ 所有 Worker 已启动，等待任务...\n");
+  } catch (error: any) {
+    console.error('\n❌ Worker 启动失败:', error.message);
+    console.error(error.stack);
+    process.exit(1);
+  }
+})();
 
 // 优雅关闭
 process.on("SIGTERM", async () => {

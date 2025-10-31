@@ -35,9 +35,5 @@ COPY . .
 # Generate Prisma Client
 RUN pnpm prisma generate
 
-# Copy database initialization script
-COPY scripts/init-database.sh ./scripts/
-RUN chmod +x ./scripts/init-database.sh
-
-# Start workers with database initialization
-CMD ["sh", "-c", "./scripts/init-database.sh && pnpm workers:prod"]
+# Start workers (database initialization is handled in workers/index.ts)
+CMD ["pnpm", "workers:prod"]
