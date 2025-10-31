@@ -58,7 +58,10 @@
       "Bash(source:*)",
       "Bash(node:*)",
       "Bash(git add:*)",
-      "Bash(git remote set-url:*)"
+      "Bash(git remote set-url:*)",
+      "Bash(DATABASE_URL='postgresql://postgres:postgres@localhost:5432/saas_starter?schema=public' npx tsx scripts/check-workflow-status.ts)",
+      "Bash(DATABASE_URL='postgresql://postgres:postgres@localhost:5432/saas_starter?schema=public' npx tsx scripts/check-workflow-status.ts cmhemjwtf0001dpgnxals99qp)",
+      "Bash(DATABASE_URL='postgresql://postgres:postgres@localhost:5432/saas_starter?schema=public' npx tsx scripts/check-workflow-status.ts cmhen67nu0001b1btzkis0iun)"
     ],
     "deny": [],
     "ask": []

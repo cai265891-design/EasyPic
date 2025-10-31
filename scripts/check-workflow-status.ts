@@ -7,25 +7,59 @@ config({ path: resolve(process.cwd(), '.env.local') });
 
 async function checkWorkflowStatus() {
   console.log('使用数据库:', process.env.DATABASE_URL || '未设置');
+  console.log('');
 
-  const workflows = await prisma.workflowExecution.findMany({
-    orderBy: { createdAt: 'desc' },
-    take: 3,
-    include: {
-      product: true,
-      listing: {
-        include: {
-          imageSet: {
-            include: {
-              productImages: {
-                orderBy: { index: 'asc' }
+  const targetId = process.argv[2];
+
+  let workflows;
+  if (targetId) {
+    console.log(`🔍 查询特定工作流: ${targetId}\n`);
+    const workflow = await prisma.workflowExecution.findUnique({
+      where: { id: targetId },
+      include: {
+        product: true,
+        listing: {
+          include: {
+            imageSet: {
+              include: {
+                productImages: {
+                  orderBy: { index: 'asc' }
+                }
               }
             }
           }
         }
       }
+    });
+
+    if (!workflow) {
+      console.log(`❌ 未找到工作流: ${targetId}`);
+      await prisma.$disconnect();
+      return;
     }
-  });
+
+    workflows = [workflow];
+  } else {
+    console.log('📋 查询最近 3 个工作流\n');
+    workflows = await prisma.workflowExecution.findMany({
+      orderBy: { createdAt: 'desc' },
+      take: 3,
+      include: {
+        product: true,
+        listing: {
+          include: {
+            imageSet: {
+              include: {
+                productImages: {
+                  orderBy: { index: 'asc' }
+                }
+              }
+            }
+          }
+        }
+      }
+    });
+  }
 
   for (const wf of workflows) {
     console.log('='.repeat(80));
