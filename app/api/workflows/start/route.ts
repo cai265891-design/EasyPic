@@ -29,17 +29,17 @@ export async function POST(req: NextRequest) {
 
     // 1. 验证用户身份
     const session = await auth();
+    logger.debug('用户认证检查', { data: { hasSession: !!session, userId: session?.user?.id } });
 
-    // 临时绕过认证验证,用于测试
-    const userId = session?.user?.id || 'test-user';
-    logger.debug('用户认证检查', { data: { userId, hasSession: !!session } });
+    if (!session?.user?.id) {
+      logger.warn('未授权访问', { data: { path: '/api/workflows/start' } });
+      return NextResponse.json(
+        { error: "未授权，请先登录" },
+        { status: 401 }
+      );
+    }
 
-    // if (!session?.user?.id) {
-    //   return NextResponse.json(
-    //     { error: "未授权，请先登录" },
-    //     { status: 401 }
-    //   );
-    // }
+    const userId = session.user.id;
 
     // 2. 解析和验证请求体
     const body = await req.json();
