@@ -38,13 +38,25 @@ function getConnection(): Redis {
 
       // Upstash 需要 TLS
       redisOptions.tls = {
-        rejectUnauthorized: false, // Upstash 使用自签名证书
+        rejectUnauthorized: false,
       };
 
       console.log(`🔌 使用 Upstash Redis: ${upstashHost}`);
     } else if (process.env.REDIS_URL) {
       redisUrl = process.env.REDIS_URL;
-      console.log(`🔌 使用自定义 Redis: ${redisUrl.replace(/:[^:]+@/, ':***@')}`);
+
+      // 自动检测 Upstash 并强制启用 TLS
+      const isUpstash = redisUrl.includes('upstash.io');
+      if (isUpstash) {
+        // 将 redis:// 替换为 rediss:// (强制 TLS)
+        redisUrl = redisUrl.replace(/^redis:\/\//, 'rediss://');
+        redisOptions.tls = {
+          rejectUnauthorized: false,
+        };
+        console.log(`🔌 使用 Upstash Redis (TLS): ${redisUrl.replace(/:[^:]+@/, ':***@')}`);
+      } else {
+        console.log(`🔌 使用自定义 Redis: ${redisUrl.replace(/:[^:]+@/, ':***@')}`);
+      }
     } else {
       redisUrl = "redis://localhost:6379";
       console.log(`🔌 使用本地 Redis: ${redisUrl}`);
