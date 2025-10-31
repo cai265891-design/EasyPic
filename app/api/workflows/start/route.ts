@@ -1,13 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
-import { imageRecognitionQueue } from "@/lib/queues";
+import { getImageRecognitionQueue } from "@/lib/queues";
+import { ensureConnection } from "@/lib/queues/config";
 import { z } from "zod";
 import { apiLogger as logger } from "@/lib/logger";
 
 // 强制动态渲染,禁用静态生成
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
+export const maxDuration = 30; // Vercel Serverless 函数最长执行 30 秒
 
 const startWorkflowSchema = z.object({
   imageUrl: z.string().url("请提供有效的图片 URL"),
@@ -76,15 +78,43 @@ export async function POST(req: NextRequest) {
     workflowId = workflow.id;
     logger.success('工作流记录已创建', { workflowId, data: { userId, category, brand } });
 
-    // 4. 加入任务队列
+    // 4. 确保 Redis 连接已建立
+    logger.stepStart('连接 Redis', workflowId);
+    try {
+      await ensureConnection();
+      logger.success('Redis 连接成功', { workflowId });
+    } catch (redisError: any) {
+      logger.error('Redis 连接失败', { workflowId, error: redisError });
+
+      // 标记工作流为失败
+      await prisma.workflowExecution.update({
+        where: { id: workflow.id },
+        data: {
+          status: "FAILED",
+          errorMessage: `Redis 连接失败: ${redisError.message}`,
+        },
+      });
+
+      return NextResponse.json(
+        {
+          error: "工作流启动失败",
+          message: "无法连接到任务队列服务,请稍后重试",
+          details: process.env.VERCEL_ENV !== 'production' ? redisError.message : undefined,
+        },
+        { status: 503 }
+      );
+    }
+
+    // 5. 加入任务队列
     logger.stepStart('添加到图片识别队列', workflowId);
-    const job = await imageRecognitionQueue.add("recognize", {
+    const queue = getImageRecognitionQueue();
+    const job = await queue.add("recognize", {
       workflowId: workflow.id,
       imageUrl,
     });
     logger.queueEvent('图片识别任务已加入队列', workflowId, job.id);
 
-    // 5. 返回响应
+    // 6. 返回响应
     logger.success(`工作流启动成功 (耗时: ${Date.now() - startTime}ms)`, {
       workflowId,
       data: { jobId: job.id }
@@ -106,7 +136,10 @@ export async function POST(req: NextRequest) {
       error,
       data: {
         processingTime: Date.now() - startTime,
-        type: error.constructor.name
+        type: error.constructor.name,
+        code: error.code,
+        errno: error.errno,
+        syscall: error.syscall,
       }
     });
 
@@ -122,6 +155,11 @@ export async function POST(req: NextRequest) {
       errorDetails.stack = error.stack;
       errorDetails.code = error.code;
       errorDetails.cause = error.cause;
+      errorDetails.errno = error.errno;
+      errorDetails.syscall = error.syscall;
+      errorDetails.redisUrl = process.env.REDIS_URL ? '已配置' : '未配置';
+      errorDetails.upstashUrl = process.env.UPSTASH_REDIS_REST_URL ? '已配置' : '未配置';
+      errorDetails.databaseUrl = process.env.DATABASE_URL ? '已配置' : '未配置';
     }
 
     return NextResponse.json(errorDetails, { status: 500 });

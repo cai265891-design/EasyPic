@@ -54,7 +54,9 @@
       "Bash(DATABASE_URL='postgresql://postgres:postgres@localhost:5432/saas_starter?schema=public' npx tsx scripts/retry-listing-generation.ts cmhd7h90u0001hxn5z0nlbni1)",
       "Bash(tee:*)",
       "Bash(git commit:*)",
-      "Bash(git push:*)"
+      "Bash(git push:*)",
+      "Bash(source:*)",
+      "Bash(node:*)"
     ],
     "deny": [],
     "ask": []

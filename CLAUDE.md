@@ -48,6 +48,16 @@ pnpm docker:down     # Stop Docker services
 # Testing
 pnpm test:r2         # Test Cloudflare R2 connection and upload
 pnpm test:workflow   # Test complete workflow with R2 integration
+
+# Deployment
+node scripts/check-env.mjs  # 快速检查环境变量配置 (推荐)
+npx tsx scripts/verify-config.ts  # 完整验证包含数据库和 Redis 连接测试
+```
+
+**部署指南**:
+- 📖 `DEPLOY_CHECKLIST.md` - 快速部署检查清单
+- 📖 `VERCEL_DEPLOYMENT.md` - 详细部署配置指南
+- 📖 `FIXES_SUMMARY.md` - 问题修复技术说明
 ```
 
 ## Architecture

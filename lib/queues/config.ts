@@ -1,6 +1,7 @@
 import Redis from "ioredis";
 
 let connection: Redis | null = null;
+let connectionPromise: Promise<Redis> | null = null;
 
 function getConnection(): Redis {
   // 构建阶段跳过 Redis 连接
@@ -9,33 +10,54 @@ function getConnection(): Redis {
   }
 
   if (!connection) {
-    connection = new Redis(process.env.REDIS_URL || "redis://localhost:6379", {
+    // 根据环境选择 Redis 配置
+    let redisUrl: string;
+    let redisOptions: any = {
       maxRetriesPerRequest: null,
-      lazyConnect: false, // 改为 false,立即连接避免 lazy connect 超时
-      enableOfflineQueue: true, // 启用离线队列,允许在连接建立前缓冲命令
-      connectTimeout: 10000, // 10秒连接超时
-      commandTimeout: 5000, // 5秒命令超时
+      lazyConnect: true,
+      enableOfflineQueue: true,
+      connectTimeout: 10000,
+      commandTimeout: 5000,
       retryStrategy: (times) => {
-        // 在 Vercel 环境最多重试 3 次,每次间隔 1 秒
         if (times > 3) {
           console.error(`❌ Redis 重试失败,已达最大次数: ${times}`);
-          return null; // 停止重试
+          return null;
         }
-        const delay = Math.min(times * 1000, 3000);
+        const delay = Math.min(times * 500, 2000);
         console.log(`🔄 Redis 重连中... (第 ${times} 次,延迟 ${delay}ms)`);
         return delay;
       },
-    });
+    };
+
+    // 检查是否使用 Upstash (REST API)
+    if (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) {
+      // Upstash 使用标准 Redis 协议,不是 REST API
+      // 从 REST URL 提取主机名
+      const upstashHost = process.env.UPSTASH_REDIS_REST_URL.replace('https://', '');
+      redisUrl = `rediss://:${process.env.UPSTASH_REDIS_REST_TOKEN}@${upstashHost}:6379`;
+
+      // Upstash 需要 TLS
+      redisOptions.tls = {
+        rejectUnauthorized: false, // Upstash 使用自签名证书
+      };
+
+      console.log(`🔌 使用 Upstash Redis: ${upstashHost}`);
+    } else if (process.env.REDIS_URL) {
+      redisUrl = process.env.REDIS_URL;
+      console.log(`🔌 使用自定义 Redis: ${redisUrl.replace(/:[^:]+@/, ':***@')}`);
+    } else {
+      redisUrl = "redis://localhost:6379";
+      console.log(`🔌 使用本地 Redis: ${redisUrl}`);
+    }
+
+    connection = new Redis(redisUrl, redisOptions);
 
     connection.on("connect", () => {
       console.log("✅ Redis connected successfully");
     });
 
     connection.on("error", (err) => {
-      // 运行时环境打印详细错误
-      if (process.env.VERCEL_ENV || process.env.NODE_ENV === 'development') {
-        console.error("❌ Redis connection error:", err.message);
-      }
+      console.error("❌ Redis connection error:", err.message);
     });
 
     connection.on("ready", () => {
@@ -44,6 +66,27 @@ function getConnection(): Redis {
   }
 
   return connection;
+}
+
+// 新增:异步连接方法,用于 API 路由
+export async function ensureConnection(): Promise<Redis> {
+  if (!connectionPromise) {
+    connectionPromise = (async () => {
+      const conn = getConnection();
+      if (conn.status === 'ready') {
+        return conn;
+      }
+      try {
+        await conn.connect();
+        return conn;
+      } catch (error) {
+        console.error('❌ Redis 连接失败:', error);
+        connectionPromise = null; // 重置以便下次重试
+        throw error;
+      }
+    })();
+  }
+  return connectionPromise;
 }
 
 export { getConnection as connection };
