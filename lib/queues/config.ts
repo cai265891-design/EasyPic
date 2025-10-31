@@ -13,17 +13,27 @@ function getConnection(): Redis {
     // 根据环境选择 Redis 配置
     let redisUrl: string;
     let redisOptions: any = {
-      maxRetriesPerRequest: null,
       lazyConnect: true,
       enableOfflineQueue: true,
-      connectTimeout: 10000,
-      commandTimeout: 5000,
+      connectTimeout: 30000,          // 增加连接超时到 30 秒 (Upstash 可能需要更长时间)
+      commandTimeout: 15000,          // 增加命令超时到 15 秒
+      keepAlive: 30000,               // 保持连接活跃 (30 秒发送一次 PING)
+      enableReadyCheck: true,         // 启用就绪检查
+      maxRetriesPerRequest: 3,        // 每个请求最多重试 3 次
+      reconnectOnError: (err) => {    // 遇到特定错误时重连
+        const targetErrors = ['READONLY', 'ETIMEDOUT', 'ECONNRESET'];
+        if (targetErrors.some(target => err.message.includes(target))) {
+          console.log(`🔄 检测到可恢复错误,尝试重连: ${err.message}`);
+          return true;
+        }
+        return false;
+      },
       retryStrategy: (times) => {
-        if (times > 3) {
+        if (times > 5) {  // 增加重试次数到 5
           console.error(`❌ Redis 重试失败,已达最大次数: ${times}`);
           return null;
         }
-        const delay = Math.min(times * 500, 2000);
+        const delay = Math.min(times * 1000, 5000);  // 增加重试间隔 (1s, 2s, 3s, 4s, 5s)
         console.log(`🔄 Redis 重连中... (第 ${times} 次,延迟 ${delay}ms)`);
         return delay;
       },
