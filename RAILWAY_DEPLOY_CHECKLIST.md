@@ -24,12 +24,14 @@
 
 ## 📋 Railway 环境变量配置清单
 
+⭐ **重要**: 本项目已优化为统一数据库架构,详见 `RAILWAY_UNIFIED_DATABASE.md`
+
 在 Railway 项目的 **Variables** 标签页中配置以下环境变量:
 
 ### 必需变量 (核心功能)
 ```bash
-# 数据库 (使用 Railway PostgreSQL 插件自动生成)
-DATABASE_URL=postgresql://...
+# 数据库 (使用 Supabase PostgreSQL,与 Web 应用共用)
+DATABASE_URL=postgres://postgres.xxx:xxx@aws-1-us-east-1.pooler.supabase.com:6543/postgres?sslmode=require&pgbouncer=true
 
 # Redis (使用 Railway Redis 插件或 Upstash)
 REDIS_URL=redis://...
@@ -70,11 +72,16 @@ STRIPE_WEBHOOK_SECRET=...
 4. Service Name: workflow-worker
 ```
 
-### 2. 添加 PostgreSQL 插件
+### 2. 配置数据库连接 ⭐ 已优化
 ```bash
-1. 点击 "+ New" → "Database" → "Add PostgreSQL"
-2. Railway 自动生成 DATABASE_URL
-3. 自动添加到 Worker 服务的环境变量
+# ❌ 旧方案: 添加 Railway PostgreSQL 插件 (不再需要)
+# ✅ 新方案: 使用 Supabase PostgreSQL (与 Web 应用共用)
+
+1. 在 Worker 服务的 Variables 标签
+2. 添加 DATABASE_URL,值为 Supabase 连接字符串
+3. 保存 (Railway 自动重启)
+
+详见: RAILWAY_UNIFIED_DATABASE.md
 ```
 
 ### 3. 添加 Redis 插件 (方案 A: Railway Redis)
