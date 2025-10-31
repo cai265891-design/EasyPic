@@ -42,16 +42,16 @@ export function sanitizeDatabaseUrl(url: string | undefined): string {
     });
   }
 
-  // 2. 验证基本格式
-  const postgresUrlRegex = /^postgresql:\/\/.+@.+:\d+\/.+$/i;
+  // 2. 验证基本格式 (支持 postgres:// 和 postgresql://)
+  const postgresUrlRegex = /^postgres(ql)?:\/\/.+@.+:\d+\/.+$/i;
   if (!postgresUrlRegex.test(sanitized)) {
     console.warn('⚠️  DATABASE_URL 格式可能不正确:', sanitized.replace(/:[^:]+@/, ':***@'));
   }
 
   // 3. 检测密码中的特殊字符 (提示用户但不自动修复)
-  const passwordMatch = sanitized.match(/postgresql:\/\/[^:]+:([^@]+)@/);
-  if (passwordMatch && passwordMatch[1]) {
-    const password = passwordMatch[1];
+  const passwordMatch = sanitized.match(/postgres(ql)?:\/\/[^:]+:([^@]+)@/);
+  if (passwordMatch && passwordMatch[2]) {
+    const password = passwordMatch[2];
     const specialChars = ['@', ':', '/', '?', '#', '[', ']'];
     const hasSpecialChar = specialChars.some(char => password.includes(char));
 
@@ -83,9 +83,9 @@ export function validateDatabaseUrl(url: string): {
   try {
     const sanitized = sanitizeDatabaseUrl(url);
 
-    // 解析 URL 组件
+    // 解析 URL 组件 (支持 postgres:// 和 postgresql://)
     const urlMatch = sanitized.match(
-      /^(postgresql):\/\/([^:]+):([^@]+)@(\[?[^\]]+\]?):(\d+)\/(.+)$/i
+      /^(postgres(?:ql)?):\/\/([^:]+):([^@]+)@(\[?[^\]]+\]?):(\d+)\/(.+)$/i
     );
 
     if (!urlMatch) {
@@ -95,9 +95,10 @@ export function validateDatabaseUrl(url: string): {
 
     const [, protocol, username, password, host, port, database] = urlMatch;
 
-    // 检查协议
-    if (protocol.toLowerCase() !== 'postgresql') {
-      warnings.push(`协议应为 postgresql,当前为: ${protocol}`);
+    // 检查协议 (postgres 和 postgresql 都是有效的)
+    const normalizedProtocol = protocol.toLowerCase();
+    if (normalizedProtocol !== 'postgresql' && normalizedProtocol !== 'postgres') {
+      warnings.push(`协议应为 postgres 或 postgresql,当前为: ${protocol}`);
     }
 
     // 检查端口

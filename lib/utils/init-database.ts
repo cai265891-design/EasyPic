@@ -26,31 +26,51 @@ export async function initDatabase(): Promise<void> {
   console.log('📊 正在创建/更新数据库表结构...\n');
 
   try {
+    // 设置 30 秒超时
     const output = execSync('npx prisma db push --accept-data-loss --skip-generate', {
       encoding: 'utf-8',
-      stdio: ['inherit', 'pipe', 'pipe'],  // 继承 stdin,捕获 stdout 和 stderr
+      stdio: 'pipe',  // 捕获所有输出
       env: process.env,
+      timeout: 30000, // 30 秒超时
     });
 
     // 输出 Prisma 的执行结果
-    console.log(output);
+    if (output && output.trim()) {
+      console.log(output);
+    }
 
     console.log('\n✅ 数据库表结构同步完成\n');
   } catch (error: any) {
     console.error('\n❌ 数据库初始化失败!\n');
 
+    // 输出完整的 stdout 和 stderr
+    if (error.stdout) {
+      console.error('📤 标准输出:');
+      console.error(error.stdout.toString());
+    }
+    if (error.stderr) {
+      console.error('📤 错误输出:');
+      console.error(error.stderr.toString());
+    }
+
     // 解析 Prisma 错误
-    if (error.message.includes('P1001')) {
+    const errorText = error.message + (error.stderr || '');
+
+    if (errorText.includes('P1001')) {
       console.error('🔴 错误: 无法连接到数据库服务器');
       console.error('   - 检查 DATABASE_URL 是否正确');
       console.error('   - 检查网络连接');
       console.error('   - 检查 Supabase 防火墙设置\n');
-    } else if (error.message.includes('P1003')) {
+    } else if (errorText.includes('P1003')) {
       console.error('🔴 错误: 数据库不存在');
       console.error('   - 检查 DATABASE_URL 中的数据库名称\n');
-    } else if (error.message.includes('authentication')) {
+    } else if (errorText.includes('authentication') || errorText.includes('password')) {
       console.error('🔴 错误: 数据库认证失败');
       console.error('   - 检查用户名和密码是否正确\n');
+    } else if (error.killed || errorText.includes('ETIMEDOUT')) {
+      console.error('🔴 错误: 数据库连接超时');
+      console.error('   - Supabase 连接可能不稳定');
+      console.error('   - 检查网络连接或防火墙设置\n');
     } else {
       console.error('🔴 错误详情:');
       console.error(error.message);
@@ -58,6 +78,7 @@ export async function initDatabase(): Promise<void> {
     }
 
     console.error('💡 提示: 请检查 Railway Variables 中的 DATABASE_URL 配置\n');
+    console.error('DATABASE_URL:', process.env.DATABASE_URL?.replace(/:[^:]+@/, ':***@'));
     process.exit(1);
   }
 

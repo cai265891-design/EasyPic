@@ -34,9 +34,13 @@ requiredEnvVars.forEach(({ key, description }) => {
   }
 });
 
-// 2. 验证并修复 DATABASE_URL
+// 2. 验证 DATABASE_URL (不阻塞启动,只输出警告)
 if (process.env.DATABASE_URL) {
-  printDatabaseUrlDiagnostics(process.env.DATABASE_URL);
+  try {
+    printDatabaseUrlDiagnostics(process.env.DATABASE_URL);
+  } catch (error: any) {
+    console.warn('⚠️  URL 诊断失败,但将继续尝试连接:', error.message);
+  }
 }
 
 // 3. 检查可选但推荐的环境变量
