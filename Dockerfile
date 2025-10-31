@@ -1,6 +1,9 @@
 # Dockerfile for Railway Worker deployment
 FROM node:20-alpine
 
+# Install OpenSSL and other dependencies needed by Prisma
+RUN apk add --no-cache openssl1.1-compat libc6-compat
+
 # Install pnpm
 RUN npm install -g pnpm
 
