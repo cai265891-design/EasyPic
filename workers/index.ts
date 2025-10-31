@@ -51,6 +51,21 @@ optionalEnvVars.forEach(({ key, description }) => {
   }
 });
 
+// 检查 DATABASE_URL 是否是占位符
+if (process.env.DATABASE_URL?.includes('[user]') ||
+    process.env.DATABASE_URL?.includes('[neon_hostname]') ||
+    process.env.DATABASE_URL?.includes('[dbname]')) {
+  console.error('\n❌ DATABASE_URL 是占位符格式,未正确配置!');
+  console.error('\n📋 Railway PostgreSQL 配置步骤:');
+  console.error('   1. 在 Railway 项目中点击 "+ New"');
+  console.error('   2. 选择 "Database" → "Add PostgreSQL"');
+  console.error('   3. Railway 会自动生成 DATABASE_URL 环境变量');
+  console.error('   4. 确认 DATABASE_URL 已自动注入到 Worker 服务');
+  console.error('\n💡 提示: 在 PostgreSQL 插件页面查看 Variables 标签,');
+  console.error('   应该有 DATABASE_URL 和 DATABASE_PRIVATE_URL\n');
+  process.exit(1);
+}
+
 if (hasError) {
   console.error('\n❌ 环境变量配置不完整,Worker 可能无法正常运行');
   console.error('请在 Railway 服务的 Variables 标签页中配置必需的环境变量\n');

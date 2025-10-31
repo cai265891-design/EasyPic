@@ -17,6 +17,15 @@ export function sanitizeDatabaseUrl(url: string | undefined): string {
 
   let sanitized = url.trim();
 
+  // 检测占位符格式 (Railway 模板)
+  if (sanitized.includes('[user]') || sanitized.includes('[neon_hostname]') || sanitized.includes('[dbname]')) {
+    throw new Error(
+      'DATABASE_URL 是占位符格式,未正确配置!\n' +
+      '请在 Railway 环境变量中设置真实的数据库连接字符串。\n' +
+      '提示: 如果使用 Railway PostgreSQL 插件,应该会自动生成真实的 DATABASE_URL。'
+    );
+  }
+
   // 1. 修复 IPv6 地址格式
   // 匹配格式: postgresql://user:pass@2001:db8::1:5432/db
   // 修复为: postgresql://user:pass@[2001:db8::1]:5432/db
