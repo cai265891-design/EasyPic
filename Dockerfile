@@ -1,8 +1,14 @@
 # Dockerfile for Railway Worker deployment
 FROM node:20-alpine
 
-# Install OpenSSL and other dependencies needed by Prisma
-RUN apk add --no-cache openssl1.1-compat libc6-compat
+# Install OpenSSL, Sharp dependencies, and other build tools
+RUN apk add --no-cache \
+    openssl \
+    libc6-compat \
+    vips-dev \
+    build-base \
+    python3 \
+    git
 
 # Install pnpm
 RUN npm install -g pnpm
@@ -16,9 +22,11 @@ COPY package.json pnpm-lock.yaml ./
 # Copy prisma schema first (needed for postinstall)
 COPY prisma ./prisma
 
-# Install dependencies (skip frozen lockfile to avoid esbuild conflicts)
-# Set PRISMA_SKIP_POSTINSTALL_GENERATE to skip auto generation
+# Set build-time environment variables
 ENV PRISMA_SKIP_POSTINSTALL_GENERATE=true
+ENV NODE_ENV=production
+
+# Install dependencies (skip frozen lockfile to avoid esbuild conflicts)
 RUN pnpm install --no-frozen-lockfile
 
 # Copy rest of source code
