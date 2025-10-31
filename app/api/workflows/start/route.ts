@@ -91,7 +91,7 @@ export async function POST(req: NextRequest) {
         where: { id: workflow.id },
         data: {
           status: "FAILED",
-          errorMessage: `Redis 连接失败: ${redisError.message}`,
+          error: `Redis 连接失败: ${redisError.message}`,
         },
       });
 
