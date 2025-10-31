@@ -12,6 +12,16 @@
 - ✅ 创建 `.dockerignore` 排除不必要文件
 - ✅ 减少镜像体积,加快部署速度
 
+### 3. Redis 连接修复
+- ✅ 自动检测 Upstash Redis 并启用 TLS (`rediss://`)
+- ✅ 添加连接重试和错误处理
+
+### 4. DATABASE_URL 验证和修复 (NEW!)
+- ✅ 自动检测和修复 IPv6 地址格式错误
+- ✅ 在 Worker 启动前验证所有必需环境变量
+- ✅ 提供详细的错误诊断和修复建议
+- ✅ 添加数据库连接诊断脚本
+
 ## 📋 Railway 环境变量配置清单
 
 在 Railway 项目的 **Variables** 标签页中配置以下环境变量:
@@ -154,6 +164,56 @@ curl -X POST https://your-app.com/api/workflows/start \
 - 日志中是否有错误信息
 - Redis 连接是否成功
 - 数据库连接是否正常
+
+### 问题 6: DATABASE_URL IPv6 地址解析失败 ⭐ NEW!
+**错误信息**:
+```
+PrismaClientInitializationError:
+Error parsing connection string: invalid IPv6 address in database URL
+```
+
+**根本原因**:
+Railway PostgreSQL 公网连接使用 IPv6 地址,格式可能不正确(缺少方括号)
+
+**解决方案 (按优先级)**:
+
+#### 方案 1: 使用 Railway 内网连接 (推荐) ⭐
+1. 进入 Railway PostgreSQL 插件页面
+2. 复制 **DATABASE_PRIVATE_URL** (格式如 `postgresql://user:pass@postgres.railway.internal:5432/db`)
+3. 在 Worker 服务的 Variables 中,将 `DATABASE_URL` 的值替换为 `DATABASE_PRIVATE_URL`
+4. 重启 Worker 服务
+
+**优势**:
+- ✅ 避免 IPv6 解析问题 (使用域名)
+- ✅ 更快 (内网连接,延迟 ~2ms vs ~20ms)
+- ✅ 更安全 (不走公网)
+
+#### 方案 2: 代码自动修复 (已实现)
+代码已添加自动检测和修复逻辑:
+- `lib/db.ts`: 在 Prisma Client 初始化前自动修复 URL
+- `workers/index.ts`: 启动时验证环境变量并打印诊断信息
+
+如果看到日志 `✅ DATABASE_URL 已自动修复`,说明代码已自动处理
+
+#### 方案 3: 手动修复 IPv6 格式
+如果必须使用公网连接,确保 IPv6 地址用方括号包裹:
+```bash
+# ❌ 错误
+DATABASE_URL=postgresql://user:pass@2001:db8::1:5432/db
+
+# ✅ 正确
+DATABASE_URL=postgresql://user:pass@[2001:db8::1]:5432/db
+```
+
+**诊断工具**:
+运行以下脚本检查 DATABASE_URL 配置:
+```bash
+# 本地诊断
+npx tsx scripts/diagnose-database.ts
+
+# Railway Shell 中诊断
+echo $DATABASE_URL
+```
 
 ## 📊 监控指标
 
