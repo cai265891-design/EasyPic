@@ -190,43 +190,72 @@ ${userFeedback ? `用户反馈：${userFeedback}` : ""}
 - The model should automatically infer reasonable attributes not explicitly stated (e.g., suitable age range, interaction modes).
 - Keep all fields complete (including five items each for keywords and image_prompts).`;
 
-  const response = await fetch("https://shuchong.xyz/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      Accept: "application/json",
-      Authorization: "Bearer sk-aPpevMSduqTbPvAa7VxFSpzyzwEnHUWVW3qw1QlccmtXArHo",
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      model: "gpt-5-mini-2025-08-07",
-      messages: [
-        {
-          role: "system",
-          content: systemPrompt,
-        },
-        {
-          role: "user",
-          content: `商品信息：\n${productDescription}\n\n请生成亚马逊 listing，严格按 JSON 格式输出。`,
-        },
-      ],
-      temperature: 0.7,
-      max_tokens: 4096,
-      stream: false,
-    }),
-  });
+  const startTime = Date.now();
+  console.log(`[generateListing] 开始请求 API...`);
+
+  // 添加 60 秒超时控制
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 60000);
+
+  let response: Response;
+  try {
+    response = await fetch("https://shuchong.xyz/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        Accept: "application/json",
+        Authorization: "Bearer sk-aPpevMSduqTbPvAa7VxFSpzyzwEnHUWVW3qw1QlccmtXArHo",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "gpt-5-mini-2025-08-07",
+        messages: [
+          {
+            role: "system",
+            content: systemPrompt,
+          },
+          {
+            role: "user",
+            content: `商品信息：\n${productDescription}\n\n请生成亚马逊 listing，严格按 JSON 格式输出。`,
+          },
+        ],
+        temperature: 0.7,
+        max_tokens: 4096,
+        stream: false,
+      }),
+      signal: controller.signal,
+    });
+  } catch (error: any) {
+    const elapsed = Date.now() - startTime;
+    if (error.name === 'AbortError') {
+      throw new Error(`文案生成 API 请求超时 (60秒) | 已耗时: ${elapsed}ms`);
+    }
+    throw new Error(`文案生成 API 网络错误: ${error.message} | 已耗时: ${elapsed}ms`);
+  } finally {
+    clearTimeout(timeoutId);
+  }
+
+  const fetchTime = Date.now() - startTime;
+  console.log(`[generateListing] API 响应时间: ${fetchTime}ms`);
 
   if (!response.ok) {
+    const errorText = await response.text().catch(() => 'Unknown error');
     throw new Error(
-      `文案生成 API 请求失败: ${response.status} ${response.statusText}`
+      `文案生成 API 请求失败: ${response.status} ${response.statusText} | 响应: ${errorText.substring(0, 200)}`
     );
   }
 
   const data = await response.json();
+  console.log(`[generateListing] 解析响应完成`);
+
   const responseText = data.choices?.[0]?.message?.content || "";
 
   if (!responseText) {
-    throw new Error("文案生成 API 返回内容为空");
+    // 记录完整响应结构以便调试
+    console.error('[generateListing] API 返回空内容,完整响应:', JSON.stringify(data, null, 2));
+    throw new Error(`文案生成 API 返回内容为空 | 响应结构: ${JSON.stringify(Object.keys(data))} | 耗时: ${fetchTime}ms`);
   }
+
+  console.log(`[generateListing] 响应内容长度: ${responseText.length} 字符`);
 
   // 解析 JSON 响应
   const listing = parseListingResponse(responseText);

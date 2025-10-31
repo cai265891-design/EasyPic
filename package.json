@@ -23,7 +23,9 @@
     "login-link": "DATABASE_URL='postgresql://postgres:postgres@localhost:5432/saas_db?schema=public' tsx scripts/get-login-link.ts",
     "test:r2": "tsx scripts/test-r2-connection.ts",
     "test:workflow": "tsx scripts/test-workflow-with-r2.ts",
-    "diagnose:db": "tsx scripts/diagnose-database.ts"
+    "diagnose:db": "tsx scripts/diagnose-database.ts",
+    "clean-failed": "tsx scripts/clean-failed-tasks.ts",
+    "check-queue": "tsx scripts/check-redis-queue.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.67.0",
