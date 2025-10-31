@@ -19,7 +19,7 @@ function getConnection(): Redis {
       commandTimeout: 15000,          // 增加命令超时到 15 秒
       keepAlive: 30000,               // 保持连接活跃 (30 秒发送一次 PING)
       enableReadyCheck: true,         // 启用就绪检查
-      maxRetriesPerRequest: 3,        // 每个请求最多重试 3 次
+      maxRetriesPerRequest: null,     // ⚠️ BullMQ 要求必须为 null (使用阻塞命令 BRPOP)
       reconnectOnError: (err) => {    // 遇到特定错误时重连
         const targetErrors = ['READONLY', 'ETIMEDOUT', 'ECONNRESET'];
         if (targetErrors.some(target => err.message.includes(target))) {
