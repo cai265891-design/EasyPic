@@ -82,6 +82,22 @@ export function UserAuthForm({ className, type, ...props }: UserAuthFormProps) {
     }
   }
 
+  async function handleGoogleSignIn() {
+    setIsGoogleLoading(true);
+    try {
+      await signIn("google", {
+        callbackUrl: searchParams?.get("from") || "/dashboard",
+      });
+    } catch (error) {
+      console.error("Google 登录错误:", error);
+      toast.error("登录失败", {
+        description: "Google 登录失败,请重试",
+      });
+    } finally {
+      setIsGoogleLoading(false);
+    }
+  }
+
   return (
     <div className={cn("grid gap-6", className)} {...props}>
       <form onSubmit={handleSubmit(onSubmit)}>
@@ -106,7 +122,7 @@ export function UserAuthForm({ className, type, ...props }: UserAuthFormProps) {
               </p>
             )}
           </div>
-          <button className={cn(buttonVariants())} disabled={isLoading}>
+          <button className={cn(buttonVariants())} disabled={isLoading || isGoogleLoading}>
             {isLoading && (
               <Icons.spinner className="mr-2 size-4 animate-spin" />
             )}
@@ -114,6 +130,31 @@ export function UserAuthForm({ className, type, ...props }: UserAuthFormProps) {
           </button>
         </div>
       </form>
+
+      <div className="relative">
+        <div className="absolute inset-0 flex items-center">
+          <span className="w-full border-t" />
+        </div>
+        <div className="relative flex justify-center text-xs uppercase">
+          <span className="bg-background px-2 text-muted-foreground">
+            或者
+          </span>
+        </div>
+      </div>
+
+      <button
+        type="button"
+        className={cn(buttonVariants({ variant: "outline" }))}
+        onClick={handleGoogleSignIn}
+        disabled={isLoading || isGoogleLoading}
+      >
+        {isGoogleLoading ? (
+          <Icons.spinner className="mr-2 size-4 animate-spin" />
+        ) : (
+          <Icons.google className="mr-2 size-4" />
+        )}
+        使用 Google 登录
+      </button>
     </div>
   );
 }
